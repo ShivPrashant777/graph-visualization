@@ -4,28 +4,12 @@
 
 */
 var canvas = document.getElementById('myCanvas');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - 100;
+
 var ctx = canvas.getContext('2d');
 ctx.fillStyle = '#FF0000';
 ctx.fillRect(0, 0, 1000, 650);
-
-var co_ordinates = new Map();
-co_ordinates.set('A', [200, 200]);
-co_ordinates.set('B', [500, 100]);
-co_ordinates.set('C', [800, 200]);
-co_ordinates.set('D', [200, 500]);
-co_ordinates.set('E', [500, 500]);
-co_ordinates.set('F', [800, 500]);
-
-var nodes = ['A', 'B', 'C', 'D', 'E', 'F'];
-
-for (var i of nodes) {
-	ctx.beginPath();
-	ctx.arc(co_ordinates.get(i)[0], co_ordinates.get(i)[1], 40, 0, 2 * Math.PI);
-	ctx.stroke();
-	ctx.fillStyle = '#FFFFFF';
-	ctx.font = '30px Arial';
-	ctx.fillText(i, co_ordinates.get(i)[0] - 10, co_ordinates.get(i)[1] + 10);
-}
 
 /*
 
@@ -43,9 +27,10 @@ class Graph {
 		this.AdjList.set(v, []);
 	}
 
-	addEdge(start, end) {
-		this.AdjList.get(start).push(end);
-		this.AdjList.get(end).push(start);
+	addEdge(startNode, endNode) {
+		this.AdjList.get(startNode).push(endNode);
+		this.AdjList.get(endNode).push(startNode);
+		drawEdge(startNode, endNode);
 	}
 
 	printGraph() {
@@ -55,21 +40,10 @@ class Graph {
 			var node_neighbors = this.AdjList.get(i);
 			var conc = '';
 			for (var j of node_neighbors) {
-				this.drawEdge(i, j);
 				conc += j + ' ';
 			}
 			console.log(`${i}: ${conc}`);
 		}
-	}
-
-	drawEdge(startNode, endNode) {
-		ctx.strokeStyle = '#FFFFFF';
-		ctx.moveTo(
-			co_ordinates.get(startNode)[0],
-			co_ordinates.get(startNode)[1]
-		);
-		ctx.lineTo(co_ordinates.get(endNode)[0], co_ordinates.get(endNode)[1]);
-		ctx.stroke();
 	}
 
 	dfs(startNode) {
@@ -98,7 +72,6 @@ class Graph {
 		var q = [];
 		visited[startNode] = true;
 		ret.push(startNode);
-		//this.fillNode(startNode);
 		q.push(startNode);
 		while (q.length > 0) {
 			var node = q.shift();
@@ -108,7 +81,6 @@ class Graph {
 				if (!visited[i]) {
 					visited[i] = true;
 					ret.push(i);
-					//this.fillNode(i, 'blue');
 					q.push(i);
 				}
 			}
@@ -117,6 +89,13 @@ class Graph {
 	}
 }
 
+/*
+
+	Utitly functions
+	
+*/
+
+// Fills the node with the specified color
 function fillNode(node, fillStyle) {
 	ctx.beginPath();
 	ctx.arc(
@@ -128,14 +107,60 @@ function fillNode(node, fillStyle) {
 	);
 	ctx.fillStyle = fillStyle;
 	ctx.fill();
+	ctx.fillStyle = '#000';
+	ctx.font = '30px Arial';
+	ctx.fillText(
+		node,
+		co_ordinates.get(node)[0] - 10,
+		co_ordinates.get(node)[1] + 10
+	);
+}
+
+// Adds Node to the graph and fills it
+function createNode(event) {
+	var [x, y] = getCursorPosition(canvas, event);
+	console.log(nodeName);
+	co_ordinates.set(nodeName, [x, y]);
+	g.addVertex(nodeName);
+	fillNode(nodeName, 'blue');
+
+	//Update next Node's Name
+	nodeName = String.fromCharCode(nodeName.charCodeAt(0) + 1);
+}
+
+// Draws an Edge Between StartNode and EndNode
+function drawEdge(startNode, endNode) {
+	ctx.strokeStyle = '#FFFFFF';
+	ctx.beginPath();
+	ctx.moveTo(co_ordinates.get(startNode)[0], co_ordinates.get(startNode)[1]);
+	ctx.lineTo(co_ordinates.get(endNode)[0], co_ordinates.get(endNode)[1]);
+	ctx.stroke();
+}
+
+// Gets Cursor's X and Y co-ordinates
+function getCursorPosition(canvas, event) {
+	const rect = canvas.getBoundingClientRect();
+	const x = event.clientX - rect.left;
+	const y = event.clientY - rect.top;
+	console.log('x: ' + x + ' y: ' + y);
+	return [x, y];
 }
 
 var g = new Graph(6);
 var vertices = ['A', 'B', 'C', 'D', 'E', 'F'];
 
+var co_ordinates = new Map();
+co_ordinates.set('A', [200, 200]);
+co_ordinates.set('B', [500, 100]);
+co_ordinates.set('C', [800, 200]);
+co_ordinates.set('D', [200, 500]);
+co_ordinates.set('E', [500, 500]);
+co_ordinates.set('F', [800, 500]);
+
 // adding vertices
-for (var i = 0; i < vertices.length; i++) {
-	g.addVertex(vertices[i]);
+for (var i of vertices) {
+	g.addVertex(i);
+	fillNode(i, 'pink');
 }
 
 // adding edges
@@ -149,18 +174,23 @@ g.addEdge('E', 'C');
 g.addEdge('C', 'F');
 
 g.printGraph();
-console.log('Start Node:');
+// console.log('Start Node:');
 
-g.dfs('A');
-g.bfs('A');
+// g.dfs('A');
+// g.bfs('A');
 
 var bfs = g.bfs('A');
 
-var button = document.getElementById('myButton');
+var bfsButton = document.getElementById('bfsButton');
+var vertexButton = document.getElementById('vertexButton');
+var edgeButton = document.getElementById('edgeButton');
 
-button.addEventListener('click', () => {
+bfsButton.addEventListener('click', () => {
 	var i = 0;
-	setInterval(() => {
+	const interval = setInterval(() => {
+		if (i == co_ordinates.size - 1) {
+			clearInterval(interval);
+		}
 		fillNode(bfs[i], 'yellow');
 		ctx.fillStyle = '#000	';
 		ctx.font = '30px Arial';
@@ -172,3 +202,100 @@ button.addEventListener('click', () => {
 		i += 1;
 	}, 1000);
 });
+
+vertexButton.addEventListener('click', () => {
+	mode = 'vertex';
+	console.log(`Mode: ${mode}`);
+	canvas.addEventListener('click', createNode);
+});
+
+edgeButton.addEventListener('click', () => {
+	canvas.removeEventListener('click', createNode);
+	mode = 'edge';
+	console.log(`Mode: ${mode}`);
+
+	canvas.addEventListener('click', function (e) {
+		console.log('ADDED EDGE');
+	});
+});
+
+var nodeName = 'T';
+var mode = undefined;
+
+//
+// DRAWING EDGE
+//
+
+// var flag = false,
+// 	prevX = 0,
+// 	currX = 0,
+// 	prevY = 0,
+// 	currY = 0,
+// 	dot_flag = false;
+// var x = 'black',
+// 	y = 2;
+
+// canvas.addEventListener(
+// 	'mousemove',
+// 	function (e) {
+// 		findxy('move', e);
+// 	},
+// 	false
+// );
+// canvas.addEventListener(
+// 	'mousedown',
+// 	function (e) {
+// 		findxy('down', e);
+// 	},
+// 	false
+// );
+// canvas.addEventListener(
+// 	'mouseup',
+// 	function (e) {
+// 		findxy('up', e);
+// 	},
+// 	false
+// );
+// canvas.addEventListener(
+// 	'mouseout',
+// 	function (e) {
+// 		findxy('out', e);
+// 	},
+// 	false
+// );
+
+// function draw() {
+// 	ctx.beginPath();
+// 	ctx.moveTo(prevX, prevY);
+// 	ctx.lineTo(currX, currY);
+// 	ctx.strokeStyle = x;
+// 	ctx.lineWidth = y;
+// 	ctx.stroke();
+// 	ctx.closePath();
+// }
+
+// function findxy(res, e) {
+// 	if (res == 'down') {
+// 		prevX = currX;
+// 		prevY = currY;
+// 		currX = e.clientX - canvas.offsetLeft;
+// 		currY = e.clientY - canvas.offsetTop;
+
+// 		flag = true;
+// 		dot_flag = true;
+// 		if (dot_flag) {
+// 			ctx.beginPath();
+// 			ctx.fillStyle = x;
+// 			ctx.fillRect(currX, currY, 2, 2);
+// 			ctx.closePath();
+// 			dot_flag = false;
+// 		}
+// 	}
+// 	if (res == 'up' || res == 'out') {
+// 		prevX = currX;
+// 		prevY = currY;
+// 		currX = e.clientX - canvas.offsetLeft;
+// 		currY = e.clientY - canvas.offsetTop;
+// 		draw();
+// 	}
+// }
