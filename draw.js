@@ -89,6 +89,30 @@ class Graph {
 	}
 }
 
+class Node {
+	constructor(nodeName, x, y) {
+		this.nodeName = nodeName;
+		this.x = x;
+		this.y = y;
+	}
+
+	fillNode(nodeName, fillStyle) {
+		ctx.beginPath();
+		ctx.arc(this.x, this.y, 35, 0, 2 * Math.PI);
+		ctx.fillStyle = fillStyle;
+		ctx.fill();
+		ctx.fillStyle = '#000';
+		ctx.font = '30px Arial';
+		ctx.fillText(nodeName, this.x - 10, this.y + 10);
+	}
+
+	isPointInNode(mouseX, mouseY) {
+		if (Math.abs(mouseX - this.x) < 40 && Math.abs(mouseY - this.y) < 40) {
+			return true;
+		}
+	}
+}
+
 /*
 
 	Utitly functions
@@ -116,14 +140,17 @@ function fillNode(node, fillStyle) {
 	);
 }
 
+var nodeArray = [];
+
 // Adds Node to the graph and fills it
 function createNode(event) {
 	var [x, y] = getCursorPosition(canvas, event);
 	console.log(nodeName);
 	co_ordinates.set(nodeName, [x, y]);
 	g.addVertex(nodeName);
-	fillNode(nodeName, 'blue');
-
+	var newNode = new Node(nodeName, x, y);
+	newNode.fillNode(nodeName, 'blue');
+	nodeArray.push(newNode);
 	//Update next Node's Name
 	nodeName = String.fromCharCode(nodeName.charCodeAt(0) + 1);
 }
@@ -146,46 +173,50 @@ function getCursorPosition(canvas, event) {
 	return [x, y];
 }
 
+var nodeName = 'A';
+var mode = undefined;
+
 var g = new Graph(6);
-var vertices = ['A', 'B', 'C', 'D', 'E', 'F'];
+// var vertices = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 var co_ordinates = new Map();
-co_ordinates.set('A', [200, 200]);
-co_ordinates.set('B', [500, 100]);
-co_ordinates.set('C', [800, 200]);
-co_ordinates.set('D', [200, 500]);
-co_ordinates.set('E', [500, 500]);
-co_ordinates.set('F', [800, 500]);
+// co_ordinates.set('A', [200, 200]);
+// co_ordinates.set('B', [500, 100]);
+// co_ordinates.set('C', [800, 200]);
+// co_ordinates.set('D', [200, 500]);
+// co_ordinates.set('E', [500, 500]);
+// co_ordinates.set('F', [800, 500]);
 
-// adding vertices
-for (var i of vertices) {
-	g.addVertex(i);
-	fillNode(i, 'pink');
-}
+// // adding vertices
+// for (var i of vertices) {
+// 	g.addVertex(i);
+// 	fillNode(i, 'pink');
+// }
 
-// adding edges
-g.addEdge('A', 'B');
-g.addEdge('A', 'D');
-g.addEdge('A', 'E');
-g.addEdge('B', 'C');
-g.addEdge('D', 'E');
-g.addEdge('E', 'F');
-g.addEdge('E', 'C');
-g.addEdge('C', 'F');
+// // adding edges
+// g.addEdge('A', 'B');
+// g.addEdge('A', 'D');
+// g.addEdge('A', 'E');
+// g.addEdge('B', 'C');
+// g.addEdge('D', 'E');
+// g.addEdge('E', 'F');
+// g.addEdge('E', 'C');
+// g.addEdge('C', 'F');
 
-g.printGraph();
+// g.printGraph();
 // console.log('Start Node:');
 
 // g.dfs('A');
 // g.bfs('A');
-
-var bfs = g.bfs('A');
 
 var bfsButton = document.getElementById('bfsButton');
 var vertexButton = document.getElementById('vertexButton');
 var edgeButton = document.getElementById('edgeButton');
 
 bfsButton.addEventListener('click', () => {
+	console.log(g);
+	bfs = g.bfs('A');
+	console.log(co_ordinates);
 	var i = 0;
 	const interval = setInterval(() => {
 		if (i == co_ordinates.size - 1) {
@@ -213,14 +244,41 @@ edgeButton.addEventListener('click', () => {
 	canvas.removeEventListener('click', createNode);
 	mode = 'edge';
 	console.log(`Mode: ${mode}`);
+	var startNode,
+		endNode = undefined;
+	canvas.addEventListener('mousedown', function (event) {
+		console.log('MouseDown');
+		var [x, y] = getCursorPosition(canvas, event);
+		for (var i of nodeArray) {
+			if (i.isPointInNode(x, y)) {
+				startNode = i;
+				break;
+			}
+		}
+	});
 
-	canvas.addEventListener('click', function (e) {
-		console.log('ADDED EDGE');
+	canvas.addEventListener('mouseup', function (event) {
+		console.log('MouseUp');
+		var [x, y] = getCursorPosition(canvas, event);
+		for (var j of nodeArray) {
+			if (j.isPointInNode(x, y) && j.nodeName != startNode.nodeName) {
+				endNode = j;
+				break;
+			}
+		}
+		if (startNode != undefined && endNode != undefined) {
+			fillNode(startNode.nodeName, 'cyan');
+			fillNode(endNode.nodeName, 'cyan');
+			ctx.strokeStyle = '#000';
+			ctx.moveTo(startNode.x, startNode.y);
+			ctx.lineTo(endNode.x, endNode.y);
+			ctx.stroke();
+			g.addEdge(startNode.nodeName, endNode.nodeName);
+			console.log('EDGE DRAWN');
+			console.log(g);
+		}
 	});
 });
-
-var nodeName = 'T';
-var mode = undefined;
 
 //
 // DRAWING EDGE
