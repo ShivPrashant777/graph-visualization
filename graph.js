@@ -1,6 +1,5 @@
 class Graph {
-	constructor(numberOfVertices) {
-		this.numberOfVertices = numberOfVertices;
+	constructor() {
 		this.AdjList = new Map();
 	}
 
@@ -65,7 +64,7 @@ class Graph {
 	}
 }
 
-var g = new Graph(6);
+var g = new Graph();
 var vertices = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 // adding vertices
