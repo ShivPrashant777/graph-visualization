@@ -15,6 +15,71 @@ ctx.fillRect(0, 0, 1000, 650);
 
 /*
 
+    PRIORITY QUEUE
+
+*/
+
+// Class to store priority queue's elements
+class QElement {
+	constructor(nodeName, priority) {
+		this.nodeName = nodeName;
+		this.priority = priority;
+	}
+}
+
+// PriorityQueue class
+class PriorityQueue {
+	constructor() {
+		this.items = [];
+	}
+
+	enqueue(nodeName, priority) {
+		var qElement = new QElement(nodeName, priority);
+		var contain = false;
+
+		for (var i = 0; i < this.items.length; i++) {
+			if (this.items[i].priority > qElement.priority) {
+				this.items.splice(i, 0, qElement);
+				contain = true;
+				break;
+			}
+		}
+
+		// if the element has the highest priority
+		// it is added at the end of the queue
+		if (!contain) {
+			this.items.push(qElement);
+		}
+	}
+
+	dequeue() {
+		if (this.isEmpty()) {
+			return 'Underflow';
+		}
+		return this.items.shift();
+	}
+
+	front() {
+		if (this.isEmpty()) {
+			return 'No elements in Queue';
+		}
+		return this.items[0];
+	}
+
+	isEmpty() {
+		return this.items.length == 0;
+	}
+
+	printPQueue() {
+		var str = '';
+		for (var i = 0; i < this.items.length; i++)
+			str += this.items[i].element + ' ';
+		return str;
+	}
+}
+
+/*
+
     GRAPH
 
 */
@@ -50,18 +115,21 @@ class Graph {
 	dfs(startNode) {
 		console.log('DFS:');
 		var visited = {};
-		this.dfsUntil(startNode, visited);
+		var ret = [];
+		this.dfsUntil(startNode, visited, ret);
+		return ret;
 	}
 
-	dfsUntil(vertex, visited) {
+	dfsUntil(vertex, visited, ret) {
 		console.log(vertex);
 		visited[vertex] = true;
+		ret.push(vertex);
 
 		var neighbors = this.AdjList.get(vertex);
 
 		for (var i of neighbors) {
 			if (!visited[i]) {
-				this.dfsUntil(i, visited);
+				this.dfsUntil(i, visited, ret);
 			}
 		}
 	}
@@ -87,6 +155,50 @@ class Graph {
 			}
 		}
 		return ret;
+	}
+
+	bestFirstSearch(startNode, endNode) {
+		var visited = {};
+		for (var k of co_ordinates) {
+			visited[k[0]] = false;
+		}
+		var ret = [];
+		var pq = new PriorityQueue();
+		visited[startNode] = true;
+		var priority = this.euclidianDistance(endNode, startNode);
+		pq.enqueue(startNode, priority);
+		var path = '';
+		while (!pq.isEmpty()) {
+			var first = pq.front();
+			path += ' ' + first.nodeName;
+			ret.push(first.nodeName);
+			pq.dequeue();
+			if (first.nodeName == endNode) {
+				break;
+			}
+			var neighbors = this.AdjList.get(first.nodeName);
+			for (var i of neighbors) {
+				if (visited[i] == false) {
+					visited[i] = true;
+					priority = this.euclidianDistance(endNode, i);
+					pq.enqueue(i, priority);
+				}
+			}
+		}
+		console.log(path);
+		return ret;
+	}
+
+	euclidianDistance(startNode, endNode) {
+		var dist = Math.sqrt(
+			(co_ordinates.get(startNode)[0] - co_ordinates.get(endNode)[0]) **
+				2 +
+				(co_ordinates.get(startNode)[1] -
+					co_ordinates.get(endNode)[1]) **
+					2
+		);
+
+		return dist;
 	}
 }
 
@@ -158,6 +270,7 @@ function drawEdge(startNode, endNode) {
 	ctx.stroke();
 }
 
+// Get the starting node for drawing an edge
 function getStartNode(event) {
 	console.log('MouseDown');
 	var [x, y] = getCursorPosition(canvas, event);
@@ -169,6 +282,7 @@ function getStartNode(event) {
 	}
 }
 
+// Get the ending node for drawing an edge
 function getEndNode(event) {
 	console.log('MouseUp');
 	var [x, y] = getCursorPosition(canvas, event);
@@ -195,14 +309,17 @@ var mode = undefined; // Draw Mode (Vertex or Edge)
 var g = new Graph();
 var co_ordinates = new Map(); // Stores the co-ordinates of all the nodes
 
-var bfsButton = document.getElementById('bfsButton');
 var vertexButton = document.getElementById('vertexButton');
 var edgeButton = document.getElementById('edgeButton');
+var bfsButton = document.getElementById('bfsButton');
+var dfsButton = document.getElementById('dfsButton');
+var bestFirstSearchButton = document.getElementById('bestFirstSearchButton');
+var startingNode = document.getElementById('start-node');
+var endingNode = document.getElementById('end-node');
 
 bfsButton.addEventListener('click', () => {
 	console.log(g);
 	var bfs = g.bfs('A');
-	console.log(co_ordinates);
 	var i = 0;
 	const interval = setInterval(() => {
 		if (i == co_ordinates.size - 1) {
@@ -212,13 +329,40 @@ bfsButton.addEventListener('click', () => {
 			return j.nodeName == bfs[i];
 		});
 		nodeArray[index].fillNode('yellow');
-		ctx.fillStyle = '#000';
-		ctx.font = '30px Arial';
-		ctx.fillText(
-			bfs[i],
-			co_ordinates.get(bfs[i])[0] - 10,
-			co_ordinates.get(bfs[i])[1] + 10
-		);
+		i += 1;
+	}, 1000);
+});
+
+dfsButton.addEventListener('click', () => {
+	console.log(g);
+	var dfs = g.dfs('A');
+	var i = 0;
+	const interval = setInterval(() => {
+		if (i == co_ordinates.size - 1) {
+			clearInterval(interval);
+		}
+		var index = nodeArray.findIndex((j) => {
+			return j.nodeName == dfs[i];
+		});
+		nodeArray[index].fillNode('purple');
+		i += 1;
+	}, 1000);
+});
+
+bestFirstSearchButton.addEventListener('click', () => {
+	var bestFirstSearch = g.bestFirstSearch(
+		startingNode.value,
+		endingNode.value
+	);
+	var i = 0;
+	const interval = setInterval(() => {
+		if (i == co_ordinates.size - 1) {
+			clearInterval(interval);
+		}
+		var index = nodeArray.findIndex((j) => {
+			return j.nodeName == bestFirstSearch[i];
+		});
+		nodeArray[index].fillNode('orange');
 		i += 1;
 	}, 1000);
 });
