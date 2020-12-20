@@ -4,14 +4,14 @@
 
 */
 var canvas = document.getElementById('myCanvas');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight - 100;
+canvas.width = window.innerWidth - 500;
+canvas.height = window.innerHeight - 150;
 
 var ctx = canvas.getContext('2d');
 
 // Fill with Red Background
-ctx.fillStyle = '#FF0000';
-ctx.fillRect(0, 0, 1000, 650);
+ctx.fillStyle = 'rgb(240, 240, 240)';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 /*
 
@@ -96,7 +96,6 @@ class Graph {
 	addEdge(startNode, endNode) {
 		this.AdjList.get(startNode).push(endNode);
 		this.AdjList.get(endNode).push(startNode);
-		drawEdge(startNode, endNode);
 	}
 
 	printGraph() {
@@ -216,12 +215,12 @@ class Node {
 	}
 
 	// Fills the node with the specified color
-	fillNode(fillStyle) {
+	fillNode(nodeColor, textColor) {
 		ctx.beginPath();
 		ctx.arc(this.x, this.y, 35, 0, 2 * Math.PI);
-		ctx.fillStyle = fillStyle;
+		ctx.fillStyle = nodeColor;
 		ctx.fill();
-		ctx.fillStyle = '#000';
+		ctx.fillStyle = textColor;
 		ctx.font = '30px Arial';
 		ctx.fillText(this.nodeName, this.x - 10, this.y + 10);
 	}
@@ -239,6 +238,10 @@ class Node {
 	Utitly functions
 	
 */
+
+var displayPanel = document.getElementById('display-panel');
+var modeName = document.getElementById('mode-name');
+
 // Gets Cursor's X and Y co-ordinates
 function getCursorPosition(canvas, event) {
 	const rect = canvas.getBoundingClientRect();
@@ -255,8 +258,15 @@ function createNode(event) {
 	co_ordinates.set(nodeName, [x, y]);
 	g.addVertex(nodeName);
 	var newNode = new Node(nodeName, x, y);
-	newNode.fillNode('blue');
+	newNode.fillNode('#025951', '#F0F2F2');
 	nodeArray.push(newNode);
+
+	// Display the operation in side panel
+	const p = document.createElement('p');
+	p.innerHTML = `Created Vertex: ${nodeName}`;
+	displayPanel.appendChild(p);
+	autoScrollDown();
+
 	//Update next Node's Name
 	nodeName = String.fromCharCode(nodeName.charCodeAt(0) + 1);
 }
@@ -268,6 +278,11 @@ function drawEdge(startNode, endNode) {
 	ctx.moveTo(startNode.x, startNode.y);
 	ctx.lineTo(endNode.x, endNode.y);
 	ctx.stroke();
+	// Display the operation in side panel
+	const p = document.createElement('p');
+	p.innerHTML = `Created Edge From ${startNode.nodeName} to ${endNode.nodeName}`;
+	displayPanel.appendChild(p);
+	autoScrollDown();
 }
 
 // Get the starting node for drawing an edge
@@ -293,8 +308,8 @@ function getEndNode(event) {
 		}
 	}
 	if (startNode != undefined && endNode != undefined) {
-		startNode.fillNode('cyan');
-		endNode.fillNode('cyan');
+		startNode.fillNode('#F24501', '#FFF');
+		endNode.fillNode('#F24501', '#FFF');
 		drawEdge(startNode, endNode);
 		g.addEdge(startNode.nodeName, endNode.nodeName);
 		console.log('EDGE DRAWN');
@@ -317,10 +332,35 @@ var bestFirstSearchButton = document.getElementById('bestFirstSearchButton');
 var startingNode = document.getElementById('start-node');
 var endingNode = document.getElementById('end-node');
 
+vertexButton.addEventListener('click', () => {
+	vertexButton.setAttribute('data-clicked', 'true');
+	edgeButton.setAttribute('data-clicked', 'false');
+	modeName.innerHTML = 'Mode: Vertex';
+	canvas.removeEventListener('mousedown', getStartNode);
+	canvas.removeEventListener('mouseup', getEndNode);
+	mode = 'vertex';
+	console.log(`Mode: ${mode}`);
+	canvas.addEventListener('click', createNode);
+});
+
+edgeButton.addEventListener('click', () => {
+	vertexButton.setAttribute('data-clicked', 'false');
+	edgeButton.setAttribute('data-clicked', 'true');
+	modeName.innerHTML = 'Mode: Edge';
+	canvas.removeEventListener('click', createNode);
+	mode = 'edge';
+	console.log(`Mode: ${mode}`);
+
+	canvas.addEventListener('mousedown', getStartNode);
+
+	canvas.addEventListener('mouseup', getEndNode);
+});
+
 bfsButton.addEventListener('click', () => {
 	console.log(g);
 	var bfs = g.bfs('A');
 	var i = 0;
+	var path = '';
 	const interval = setInterval(() => {
 		if (i == co_ordinates.size - 1) {
 			clearInterval(interval);
@@ -328,7 +368,21 @@ bfsButton.addEventListener('click', () => {
 		var index = nodeArray.findIndex((j) => {
 			return j.nodeName == bfs[i];
 		});
-		nodeArray[index].fillNode('yellow');
+		nodeArray[index].fillNode('#D82475', '#FFF');
+		path += ' ' + bfs[i];
+
+		// Display the operation in side panel
+		const p = document.createElement('p');
+		p.classList.add('bfs-p');
+		p.innerHTML = `BFS Path: ${path}`;
+		displayPanel.appendChild(p);
+		// if (i > 0) {
+		// 	var selectList = document.querySelectorAll('.bfs-p');
+		// 	displayPanel.removeChild(selectList[selectList.length - 1]);
+		// }
+		autoScrollDown();
+
+		// increment i to get next node in the list
 		i += 1;
 	}, 1000);
 });
@@ -337,6 +391,7 @@ dfsButton.addEventListener('click', () => {
 	console.log(g);
 	var dfs = g.dfs('A');
 	var i = 0;
+	var path = '';
 	const interval = setInterval(() => {
 		if (i == co_ordinates.size - 1) {
 			clearInterval(interval);
@@ -344,7 +399,19 @@ dfsButton.addEventListener('click', () => {
 		var index = nodeArray.findIndex((j) => {
 			return j.nodeName == dfs[i];
 		});
-		nodeArray[index].fillNode('purple');
+		nodeArray[index].fillNode('#033E8C', '#FFF');
+		path += ' ' + dfs[i];
+
+		// Display the operation in side panel
+		const p = document.createElement('p');
+		p.id = 'dfs-p';
+		p.innerHTML = `DFS Path: ${path}`;
+		displayPanel.appendChild(p);
+		if (i > 0) {
+			displayPanel.removeChild(document.getElementById('dfs-p'));
+		}
+		autoScrollDown();
+		// increment i to get next node in the list
 		i += 1;
 	}, 1000);
 });
@@ -355,6 +422,7 @@ bestFirstSearchButton.addEventListener('click', () => {
 		endingNode.value
 	);
 	var i = 0;
+	var path = '';
 	const interval = setInterval(() => {
 		if (i == co_ordinates.size - 1) {
 			clearInterval(interval);
@@ -362,25 +430,25 @@ bestFirstSearchButton.addEventListener('click', () => {
 		var index = nodeArray.findIndex((j) => {
 			return j.nodeName == bestFirstSearch[i];
 		});
-		nodeArray[index].fillNode('orange');
+		nodeArray[index].fillNode('#B159FF', '#011C40');
+		path += ' ' + bestFirstSearch[i];
+
+		// Display the operation in side panel
+		const p = document.createElement('p');
+		p.id = 'bestFirstSearch-p';
+		p.innerHTML = `Best First Search Path: ${path}`;
+		displayPanel.appendChild(p);
+		if (i > 0) {
+			displayPanel.removeChild(
+				document.getElementById('bestFirstSearch-p')
+			);
+		}
+		autoScrollDown();
+		// increment i to get next node in the list
 		i += 1;
 	}, 1000);
 });
 
-vertexButton.addEventListener('click', () => {
-	canvas.removeEventListener('mousedown', getStartNode);
-	canvas.removeEventListener('mouseup', getEndNode);
-	mode = 'vertex';
-	console.log(`Mode: ${mode}`);
-	canvas.addEventListener('click', createNode);
-});
-
-edgeButton.addEventListener('click', () => {
-	canvas.removeEventListener('click', createNode);
-	mode = 'edge';
-	console.log(`Mode: ${mode}`);
-
-	canvas.addEventListener('mousedown', getStartNode);
-
-	canvas.addEventListener('mouseup', getEndNode);
-});
+function autoScrollDown() {
+	displayPanel.scrollTop = displayPanel.scrollHeight;
+}
