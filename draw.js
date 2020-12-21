@@ -328,6 +328,7 @@ var vertexButton = document.getElementById('vertexButton');
 var edgeButton = document.getElementById('edgeButton');
 var bfsButton = document.getElementById('bfsButton');
 var dfsButton = document.getElementById('dfsButton');
+var clearButton = document.getElementById('clear');
 var bestFirstSearchButton = document.getElementById('bestFirstSearchButton');
 var startingNode = document.getElementById('start-node');
 var endingNode = document.getElementById('end-node');
@@ -335,7 +336,7 @@ var endingNode = document.getElementById('end-node');
 vertexButton.addEventListener('click', () => {
 	vertexButton.setAttribute('data-clicked', 'true');
 	edgeButton.setAttribute('data-clicked', 'false');
-	modeName.innerHTML = 'Mode: Vertex';
+	modeName.innerHTML = 'Vertex';
 	canvas.removeEventListener('mousedown', getStartNode);
 	canvas.removeEventListener('mouseup', getEndNode);
 	mode = 'vertex';
@@ -346,7 +347,7 @@ vertexButton.addEventListener('click', () => {
 edgeButton.addEventListener('click', () => {
 	vertexButton.setAttribute('data-clicked', 'false');
 	edgeButton.setAttribute('data-clicked', 'true');
-	modeName.innerHTML = 'Mode: Edge';
+	modeName.innerHTML = 'Edge';
 	canvas.removeEventListener('click', createNode);
 	mode = 'edge';
 	console.log(`Mode: ${mode}`);
@@ -357,14 +358,19 @@ edgeButton.addEventListener('click', () => {
 });
 
 bfsButton.addEventListener('click', () => {
-	console.log(g);
 	var bfs = g.bfs('A');
 	var i = 0;
 	var path = '';
 	const interval = setInterval(() => {
-		if (i == co_ordinates.size - 1) {
+		if (i == bfs.length - 1) {
 			clearInterval(interval);
 		}
+		// Remove the last element with classname = bfs-p
+		if (i > 0) {
+			var selectList = document.querySelectorAll('.bfs-p');
+			displayPanel.removeChild(selectList[selectList.length - 1]);
+		}
+
 		var index = nodeArray.findIndex((j) => {
 			return j.nodeName == bfs[i];
 		});
@@ -376,10 +382,6 @@ bfsButton.addEventListener('click', () => {
 		p.classList.add('bfs-p');
 		p.innerHTML = `BFS Path: ${path}`;
 		displayPanel.appendChild(p);
-		// if (i > 0) {
-		// 	var selectList = document.querySelectorAll('.bfs-p');
-		// 	displayPanel.removeChild(selectList[selectList.length - 1]);
-		// }
 		autoScrollDown();
 
 		// increment i to get next node in the list
@@ -388,14 +390,19 @@ bfsButton.addEventListener('click', () => {
 });
 
 dfsButton.addEventListener('click', () => {
-	console.log(g);
 	var dfs = g.dfs('A');
 	var i = 0;
 	var path = '';
 	const interval = setInterval(() => {
-		if (i == co_ordinates.size - 1) {
+		if (i == dfs.length - 1) {
 			clearInterval(interval);
 		}
+		// Remove the last element with classname = dfs-p
+		if (i > 0) {
+			var selectList = document.querySelectorAll('.dfs-p');
+			displayPanel.removeChild(selectList[selectList.length - 1]);
+		}
+
 		var index = nodeArray.findIndex((j) => {
 			return j.nodeName == dfs[i];
 		});
@@ -404,16 +411,20 @@ dfsButton.addEventListener('click', () => {
 
 		// Display the operation in side panel
 		const p = document.createElement('p');
-		p.id = 'dfs-p';
+		p.classList.add('dfs-p');
 		p.innerHTML = `DFS Path: ${path}`;
 		displayPanel.appendChild(p);
-		if (i > 0) {
-			displayPanel.removeChild(document.getElementById('dfs-p'));
-		}
+
 		autoScrollDown();
 		// increment i to get next node in the list
 		i += 1;
 	}, 1000);
+});
+
+clearButton.addEventListener('click', () => {
+	for (node of nodeArray) {
+		node.fillNode('#025951', '#F0F2F2');
+	}
 });
 
 bestFirstSearchButton.addEventListener('click', () => {
@@ -424,9 +435,15 @@ bestFirstSearchButton.addEventListener('click', () => {
 	var i = 0;
 	var path = '';
 	const interval = setInterval(() => {
-		if (i == co_ordinates.size - 1) {
+		if (i == bestFirstSearch.length - 1) {
 			clearInterval(interval);
 		}
+		// Remove the last element with classname = .bestFirstSearch-p
+		if (i > 0) {
+			var selectList = document.querySelectorAll('.bestFirstSearch-p');
+			displayPanel.removeChild(selectList[selectList.length - 1]);
+		}
+
 		var index = nodeArray.findIndex((j) => {
 			return j.nodeName == bestFirstSearch[i];
 		});
@@ -435,15 +452,11 @@ bestFirstSearchButton.addEventListener('click', () => {
 
 		// Display the operation in side panel
 		const p = document.createElement('p');
-		p.id = 'bestFirstSearch-p';
+		p.classList.add('bestFirstSearch-p');
 		p.innerHTML = `Best First Search Path: ${path}`;
 		displayPanel.appendChild(p);
-		if (i > 0) {
-			displayPanel.removeChild(
-				document.getElementById('bestFirstSearch-p')
-			);
-		}
 		autoScrollDown();
+
 		// increment i to get next node in the list
 		i += 1;
 	}, 1000);

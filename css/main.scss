@@ -6,6 +6,11 @@ body {
 	display: flex;
 }
 
+canvas {
+	min-width: 1036px;
+	min-height: 608px;
+}
+
 #display-panel {
 	margin-left: 20px;
 	background: #160f47;
@@ -19,12 +24,17 @@ body {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		border-bottom: 1px solid rgb(82, 221, 82);
 	}
 
-	h1,
-	h2 {
+	h1 {
 		font-size: 1.3em;
 		margin: 5px 0;
+		color: rgb(82, 221, 82);
+	}
+
+	#mode-name {
+		color: yellow;
 	}
 }
 
@@ -57,6 +67,16 @@ body {
 
 	button:focus {
 		outline: none;
+	}
+
+	#clear {
+		background: #fff;
+		color: #020f59;
+	}
+
+	#clear:hover {
+		color: #fff;
+		background: #020f59;
 	}
 
 	form {

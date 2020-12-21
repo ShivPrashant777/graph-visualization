@@ -8,6 +8,11 @@ body {
   display: flex;
 }
 
+canvas {
+  min-width: 1036px;
+  min-height: 608px;
+}
+
 #display-panel {
   margin-left: 20px;
   background: #160f47;
@@ -28,12 +33,17 @@ body {
   -webkit-box-pack: justify;
       -ms-flex-pack: justify;
           justify-content: space-between;
+  border-bottom: 1px solid #52dd52;
 }
 
-#display-panel h1,
-#display-panel h2 {
+#display-panel h1 {
   font-size: 1.3em;
   margin: 5px 0;
+  color: #52dd52;
+}
+
+#display-panel #mode-name {
+  color: yellow;
 }
 
 #controls {
@@ -74,6 +84,16 @@ body {
 
 #controls button:focus {
   outline: none;
+}
+
+#controls #clear {
+  background: #fff;
+  color: #020f59;
+}
+
+#controls #clear:hover {
+  color: #fff;
+  background: #020f59;
 }
 
 #controls form {
