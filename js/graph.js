@@ -1,4 +1,5 @@
-class Graph {
+import PriorityQueue from './priorityQueue.js';
+export class Graph {
 	constructor() {
 		this.AdjList = new Map();
 	}
@@ -28,18 +29,21 @@ class Graph {
 	dfs(startNode) {
 		console.log('DFS:');
 		var visited = {};
-		this.dfsUntil(startNode, visited);
+		var ret = [];
+		this.dfsUntil(startNode, visited, ret);
+		return ret;
 	}
 
-	dfsUntil(vertex, visited) {
+	dfsUntil(vertex, visited, ret) {
 		console.log(vertex);
 		visited[vertex] = true;
+		ret.push(vertex);
 
 		var neighbors = this.AdjList.get(vertex);
 
 		for (var i of neighbors) {
 			if (!visited[i]) {
-				this.dfsUntil(i, visited);
+				this.dfsUntil(i, visited, ret);
 			}
 		}
 	}
@@ -47,8 +51,10 @@ class Graph {
 	bfs(startNode) {
 		console.log('BFS:');
 		var visited = {};
+		var ret = [];
 		var q = [];
 		visited[startNode] = true;
+		ret.push(startNode);
 		q.push(startNode);
 		while (q.length > 0) {
 			var node = q.shift();
@@ -57,10 +63,12 @@ class Graph {
 			for (var i of neighbors) {
 				if (!visited[i]) {
 					visited[i] = true;
+					ret.push(i);
 					q.push(i);
 				}
 			}
 		}
+		return ret;
 	}
 
 	bestFirstSearch(startNode, endNode) {
@@ -108,89 +116,4 @@ class Graph {
 	}
 }
 
-// Class to store priority queue's elements
-class QElement {
-	constructor(nodeName, priority) {
-		this.nodeName = nodeName;
-		this.priority = priority;
-	}
-}
-
-// PriorityQueue class
-class PriorityQueue {
-	constructor() {
-		this.items = [];
-	}
-
-	enqueue(nodeName, priority) {
-		var qElement = new QElement(nodeName, priority);
-		var contain = false;
-
-		for (var i = 0; i < this.items.length; i++) {
-			if (this.items[i].priority > qElement.priority) {
-				this.items.splice(i, 0, qElement);
-				contain = true;
-				break;
-			}
-		}
-
-		// if the element has the highest priority
-		// it is added at the end of the queue
-		if (!contain) {
-			this.items.push(qElement);
-		}
-	}
-
-	dequeue() {
-		if (this.isEmpty()) {
-			return 'Underflow';
-		}
-		return this.items.shift();
-	}
-
-	front() {
-		if (this.isEmpty()) {
-			return 'No elements in Queue';
-		}
-		return this.items[0];
-	}
-
-	isEmpty() {
-		return this.items.length == 0;
-	}
-
-	printPQueue() {
-		var str = '';
-		for (var i = 0; i < this.items.length; i++)
-			str += this.items[i].element + ' ';
-		return str;
-	}
-}
-
-var g = new Graph();
-var vertices = ['A', 'B', 'C', 'D', 'E', 'F'];
-var co_ordinates = new Map();
-
-co_ordinates.set('A', [5, 10]);
-co_ordinates.set('B', [10, 10]);
-co_ordinates.set('C', [10, 20]);
-co_ordinates.set('D', [20, 15]);
-co_ordinates.set('E', [30, 10]);
-// co_ordinates.set('F', [500, 300]);
-
-// adding vertices
-for (var i = 0; i < vertices.length; i++) {
-	g.addVertex(vertices[i]);
-}
-
-// adding edges
-g.addEdge('A', 'B');
-g.addEdge('A', 'C');
-g.addEdge('B', 'D');
-g.addEdge('B', 'E');
-g.addEdge('D', 'E');
-g.addEdge('C', 'E');
-
-console.log('Start Node:');
-
-g.bestFirstSearch('C', 'A');
+export var co_ordinates = new Map(); // Stores the co-ordinates of all the nodes

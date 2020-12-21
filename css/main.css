@@ -10,7 +10,9 @@ body {
 
 canvas {
   min-width: 1036px;
+  max-width: 1036px;
   min-height: 608px;
+  max-height: 608px;
 }
 
 #display-panel {
