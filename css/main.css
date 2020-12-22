@@ -22,7 +22,6 @@ canvas {
   width: 100%;
   height: 590px;
   padding: 10px;
-  overflow: scroll;
 }
 
 #display-panel #top {
@@ -46,6 +45,15 @@ canvas {
 
 #display-panel #mode-name {
   color: yellow;
+}
+
+#display-panel #operations {
+  height: 560px;
+  overflow: hidden;
+}
+
+#display-panel #operations:hover {
+  overflow: scroll;
 }
 
 #controls {
