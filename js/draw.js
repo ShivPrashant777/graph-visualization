@@ -52,7 +52,7 @@ class Node {
 	
 */
 
-var displayPanel = document.getElementById('display-panel');
+var operations = document.getElementById('operations');
 var modeName = document.getElementById('mode-name');
 
 // Gets Cursor's X and Y co-ordinates
@@ -77,7 +77,7 @@ function createNode(event) {
 	// Display the operation in side panel
 	const p = document.createElement('p');
 	p.innerHTML = `Created Vertex: ${nodeName}`;
-	displayPanel.appendChild(p);
+	operations.appendChild(p);
 	autoScrollDown();
 
 	//Update next Node's Name
@@ -94,7 +94,7 @@ function drawEdge(startNode, endNode) {
 	// Display the operation in side panel
 	const p = document.createElement('p');
 	p.innerHTML = `Created Edge From ${startNode.nodeName} to ${endNode.nodeName}`;
-	displayPanel.appendChild(p);
+	operations.appendChild(p);
 	autoScrollDown();
 }
 
@@ -186,7 +186,7 @@ bfsButton.addEventListener('click', () => {
 		// Remove the last element with classname = bfs-p
 		if (i > 0) {
 			var selectList = document.querySelectorAll('.bfs-p');
-			displayPanel.removeChild(selectList[selectList.length - 1]);
+			operations.removeChild(selectList[selectList.length - 1]);
 		}
 
 		var index = nodeArray.findIndex((j) => {
@@ -199,7 +199,7 @@ bfsButton.addEventListener('click', () => {
 		const p = document.createElement('p');
 		p.classList.add('bfs-p');
 		p.innerHTML = `BFS Path: ${path}`;
-		displayPanel.appendChild(p);
+		operations.appendChild(p);
 		autoScrollDown();
 
 		// increment i to get next node in the list
@@ -218,7 +218,7 @@ dfsButton.addEventListener('click', () => {
 		// Remove the last element with classname = dfs-p
 		if (i > 0) {
 			var selectList = document.querySelectorAll('.dfs-p');
-			displayPanel.removeChild(selectList[selectList.length - 1]);
+			operations.removeChild(selectList[selectList.length - 1]);
 		}
 
 		var index = nodeArray.findIndex((j) => {
@@ -231,7 +231,7 @@ dfsButton.addEventListener('click', () => {
 		const p = document.createElement('p');
 		p.classList.add('dfs-p');
 		p.innerHTML = `DFS Path: ${path}`;
-		displayPanel.appendChild(p);
+		operations.appendChild(p);
 
 		autoScrollDown();
 		// increment i to get next node in the list
@@ -240,7 +240,7 @@ dfsButton.addEventListener('click', () => {
 });
 
 clearButton.addEventListener('click', () => {
-	for (node of nodeArray) {
+	for (var node of nodeArray) {
 		node.fillNode('#025951', '#F0F2F2');
 	}
 });
@@ -259,7 +259,7 @@ bestFirstSearchButton.addEventListener('click', () => {
 		// Remove the last element with classname = .bestFirstSearch-p
 		if (i > 0) {
 			var selectList = document.querySelectorAll('.bestFirstSearch-p');
-			displayPanel.removeChild(selectList[selectList.length - 1]);
+			operations.removeChild(selectList[selectList.length - 1]);
 		}
 
 		var index = nodeArray.findIndex((j) => {
@@ -272,7 +272,7 @@ bestFirstSearchButton.addEventListener('click', () => {
 		const p = document.createElement('p');
 		p.classList.add('bestFirstSearch-p');
 		p.innerHTML = `Best First Search Path: ${path}`;
-		displayPanel.appendChild(p);
+		operations.appendChild(p);
 		autoScrollDown();
 
 		// increment i to get next node in the list
@@ -281,5 +281,5 @@ bestFirstSearchButton.addEventListener('click', () => {
 });
 
 function autoScrollDown() {
-	displayPanel.scrollTop = displayPanel.scrollHeight;
+	operations.scrollTop = operations.scrollHeight;
 }
