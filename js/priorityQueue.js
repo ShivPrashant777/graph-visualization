@@ -55,4 +55,8 @@ export default class PriorityQueue {
 			str += this.items[i].element + ' ';
 		return str;
 	}
+
+	includes(elt){
+		return this.items.includes(elt);
+	}
 }
