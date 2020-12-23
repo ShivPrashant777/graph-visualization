@@ -25,6 +25,10 @@ class Node {
 		this.nodeName = nodeName;
 		this.x = x;
 		this.y = y;
+		this.f = 0;
+		this.g = 0;
+		this.h = 0;
+		this.previous = undefined;
 	}
 
 	// Fills the node with the specified color
@@ -71,6 +75,7 @@ function createNode(event) {
 	co_ordinates.set(nodeName, [x, y]);
 	g.addVertex(nodeName);
 	var newNode = new Node(nodeName, x, y);
+	g.addVertex(newNode);
 	newNode.fillNode('#025951', '#F0F2F2');
 	nodeArray.push(newNode);
 
@@ -112,6 +117,7 @@ var clearButton = document.getElementById('clear');
 var bestFirstSearchButton = document.getElementById('bestFirstSearchButton');
 var startingNode = document.getElementById('start-node');
 var endingNode = document.getElementById('end-node');
+var aStarButton = document.getElementById('aStarButton');
 
 vertexButton.addEventListener('click', () => {
 	vertexButton.setAttribute('data-clicked', 'true');
@@ -168,8 +174,10 @@ edgeButton.addEventListener('click', () => {
 				endNode.fillNode('#F24501', '#FFF');
 				drawEdge(startNode, endNode);
 				g.addEdge(startNode.nodeName, endNode.nodeName);
+				g.addEdge(startNode, endNode);
 				console.log('EDGE DRAWN');
 				console.log(g);
+				console.log(nodeArray);
 			}
 		}
 	});
@@ -248,7 +256,8 @@ clearButton.addEventListener('click', () => {
 bestFirstSearchButton.addEventListener('click', () => {
 	var bestFirstSearch = g.bestFirstSearch(
 		startingNode.value,
-		endingNode.value
+		endingNode.value,
+		nodeArray[1]
 	);
 	var i = 0;
 	var path = '';
@@ -278,6 +287,11 @@ bestFirstSearchButton.addEventListener('click', () => {
 		// increment i to get next node in the list
 		i += 1;
 	}, 1000);
+});
+
+aStarButton.addEventListener('click', () => {
+	var result = g.aStar(nodeArray[0], nodeArray[nodeArray.length - 1]);
+	
 });
 
 function autoScrollDown() {
