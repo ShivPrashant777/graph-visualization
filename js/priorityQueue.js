@@ -1,7 +1,7 @@
 // Class to store priority queue's elements
 class QElement {
-	constructor(nodeName, priority) {
-		this.nodeName = nodeName;
+	constructor(node, priority) {
+		this.node = node;
 		this.priority = priority;
 	}
 }
@@ -12,8 +12,8 @@ export default class PriorityQueue {
 		this.items = [];
 	}
 
-	enqueue(nodeName, priority) {
-		var qElement = new QElement(nodeName, priority);
+	enqueue(node, priority) {
+		var qElement = new QElement(node, priority);
 		var contain = false;
 
 		for (var i = 0; i < this.items.length; i++) {
@@ -52,11 +52,7 @@ export default class PriorityQueue {
 	printPQueue() {
 		var str = '';
 		for (var i = 0; i < this.items.length; i++)
-			str += this.items[i].element + ' ';
+			str += this.items[i].nodeName + ' ';
 		return str;
-	}
-
-	includes(elt){
-		return this.items.includes(elt);
 	}
 }

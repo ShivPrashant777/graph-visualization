@@ -1,19 +1,14 @@
+import PriorityQueue from './priorityQueue.js';
+
 var canvas = document.getElementById('myCanvas');
 canvas.width = window.innerWidth - 500;
 canvas.height = window.innerHeight - 150;
 
 var ctx = canvas.getContext('2d');
 
-
-import PriorityQueue from './priorityQueue.js';
-export class Graph {
+export default class Graph {
 	constructor() {
 		this.AdjList = new Map();
-	}
-
-	temp(){
-		ctx.fillStyle = 'red';
-		ctx.fillRect(100, 100, 100, 100);
 	}
 
 	addVertex(v) {
@@ -39,7 +34,6 @@ export class Graph {
 	}
 
 	dfs(startNode) {
-		console.log('DFS:');
 		var visited = {};
 		var ret = [];
 		this.dfsUntil(startNode, visited, ret);
@@ -47,36 +41,31 @@ export class Graph {
 	}
 
 	dfsUntil(vertex, visited, ret) {
-		console.log(vertex);
-		visited[vertex] = true;
-		ret.push(vertex);
+		visited[vertex.nodeName] = true;
+		ret.push(vertex.nodeName);
 
 		var neighbors = this.AdjList.get(vertex);
-
 		for (var i of neighbors) {
-			if (!visited[i]) {
+			if (!visited[i.nodeName]) {
 				this.dfsUntil(i, visited, ret);
 			}
 		}
 	}
 
 	bfs(startNode) {
-		this.temp();
-		console.log('BFS:');
 		var visited = {};
 		var ret = [];
 		var q = [];
-		visited[startNode] = true;
-		ret.push(startNode);
+		visited[startNode.nodeName] = true;
+		ret.push(startNode.nodeName);
 		q.push(startNode);
 		while (q.length > 0) {
 			var node = q.shift();
-			console.log(node);
 			var neighbors = this.AdjList.get(node);
 			for (var i of neighbors) {
-				if (!visited[i]) {
-					visited[i] = true;
-					ret.push(i);
+				if (!visited[i.nodeName]) {
+					visited[i.nodeName] = true;
+					ret.push(i.nodeName);
 					q.push(i);
 				}
 			}
@@ -84,29 +73,29 @@ export class Graph {
 		return ret;
 	}
 
-	bestFirstSearch(startNode, endNode) {
+	bestFirstSearch(startNode, endNode, nodeArray) {
 		var visited = {};
-		for (var k of co_ordinates) {
-			visited[k[0]] = false;
+		for (var k of nodeArray) {
+			visited[k.nodeName] = false;
 		}
 		var ret = [];
 		var pq = new PriorityQueue();
-		visited[startNode] = true;
+		visited[startNode.nodeName] = true;
 		var priority = this.euclidianDistance(endNode, startNode);
 		pq.enqueue(startNode, priority);
 		var path = '';
 		while (!pq.isEmpty()) {
 			var first = pq.front();
-			path += ' ' + first.nodeName;
-			ret.push(first.nodeName);
+			path += ' ' + first.node.nodeName;
+			ret.push(first.node.nodeName);
 			pq.dequeue();
-			if (first.nodeName == endNode) {
+			if (first.node.nodeName == endNode.nodeName) {
 				break;
 			}
-			var neighbors = this.AdjList.get(first.nodeName);
+			var neighbors = this.AdjList.get(first.node);
 			for (var i of neighbors) {
-				if (visited[i] == false) {
-					visited[i] = true;
+				if (visited[i.nodeName] == false) {
+					visited[i.nodeName] = true;
 					priority = this.euclidianDistance(endNode, i);
 					pq.enqueue(i, priority);
 				}
@@ -116,99 +105,136 @@ export class Graph {
 		return ret;
 	}
 
-	aStar(start, end){
+	fillNode(node, nodeColor, textColor) {
+		ctx.beginPath();
+		ctx.arc(node.x, node.y, 35, 0, 2 * Math.PI);
+		ctx.fillStyle = nodeColor;
+		ctx.fill();
+		ctx.fillStyle = textColor;
+		ctx.font = '30px Arial';
+		ctx.fillText(node.nodeName, node.x - 10, node.y + 10);
+	}
+
+	aStar(start, end) {
+		/*
+			Open = black
+			Closed = purple
+			Path = green
+		*/
 		var openSet = [];
 		var closedSet = [];
 		var path = [];
 		var done = false;
 		openSet.push(start);
-		while(!done){
-			if(openSet.length > 0){
+
+		const interval = setInterval(() => {
+			if (openSet.length > 0) {
 				var winner = 0;
-				for(var i = 0; i < openSet.length; i++){
-					if(openSet[i].f < openSet[winner].f){
+				for (var i = 0; i < openSet.length; i++) {
+					if (openSet[i].f < openSet[winner].f) {
 						winner = i;
 					}
 				}
 				var current = openSet[winner];
-				if(current === end){
+				if (current === end) {
 					console.log(end);
 					done = true;
-
 				}
 				this.removeFromArray(openSet, current);
 				closedSet.push(current);
+
 				var neighbors = this.AdjList.get(current);
-				for(var i = 0; i < neighbors.length; i++){
+				for (var i = 0; i < neighbors.length; i++) {
 					var neighbor = neighbors[i];
-					if(!closedSet.includes(neighbor)){
+					if (!closedSet.includes(neighbor)) {
 						var newPath = false;
-						// var tempG = current.g + this.euclidianDistance(
-						// 	current.nodeName, neighbor.nodeName
-						// 	);
-						var tempG = current.g + this.manhattanDistance(
-							current.x, current.y, neighbor.x, neighbor.y);
-						if(openSet.includes(current)){
-							if(tempG < neighbor.g){
+						var tempG =
+							current.g +
+							this.manhattanDistance(
+								current.x,
+								current.y,
+								neighbor.x,
+								neighbor.y
+							);
+						if (openSet.includes(current)) {
+							if (tempG < neighbor.g) {
 								newPath = true;
 								neighbor.g = tempG;
 							}
-						}
-						else{
+						} else {
 							newPath = true;
 							neighbor.g = tempG;
 							openSet.push(neighbor);
 						}
-						if(newPath){
-							neighbor.h = this.euclidianDistance(neighbor.nodeName, end.nodeName);
+						if (newPath) {
+							neighbor.h = this.euclidianDistance(neighbor, end);
 							neighbor.f = neighbor.h + neighbor.g;
 							neighbor.previous = current;
 						}
-
 					}
 				}
-			}
-			else{
+			} else {
 				done = true;
-				console.log("No Solution");
+				console.log('No Solution');
+				clearInterval(interval);
+				return;
 			}
 			path = [];
 			var temp = current;
 			path.push(temp);
-			while(temp.previous){
+			while (temp.previous) {
 				path.push(temp.previous);
 				temp = temp.previous;
 			}
-		}
-		console.log("A*: ");
-		console.log(path);
-		return path;
+
+			for (var node of openSet) {
+				this.fillNode(node, '#000', '#FFF');
+			}
+
+			for (var node of closedSet) {
+				this.fillNode(node, 'purple', '#FFF');
+			}
+
+			for (var node of path) {
+				this.fillNode(node, 'green', '#FFF');
+			}
+
+			if (done) {
+				console.log('A*: ');
+				console.log(path);
+				clearInterval(interval);
+				var result = '';
+
+				for (var i of path) {
+					result = i.nodeName + ' ' + result;
+				}
+				// display path in side panel
+				const p = document.createElement('p');
+				var operations = document.getElementById('operations');
+				p.innerHTML = `A* Path: ${result}`;
+				operations.appendChild(p);
+			}
+		}, 1000);
 	}
 
 	euclidianDistance(startNode, endNode) {
 		var dist = Math.sqrt(
-			(co_ordinates.get(startNode)[0] - co_ordinates.get(endNode)[0]) **
-				2 +
-				(co_ordinates.get(startNode)[1] -
-					co_ordinates.get(endNode)[1]) **
-					2
+			(startNode.x - endNode.x) ** 2 + (startNode.y - endNode.y) ** 2
 		);
 
 		return dist;
 	}
 
-	removeFromArray(arr, elt){
-		for(var i = arr.length - 1; i >= 0; i--){
-			if(arr[i] == elt){
+	removeFromArray(arr, element) {
+		for (var i = arr.length - 1; i >= 0; i--) {
+			if (arr[i] == element) {
 				arr.splice(i, 1);
 			}
 		}
 	}
 
-	manhattanDistance(x1, y1, x2, y2){
-		var dist = (Math.abs(x1 - x2) + Math.abs(y1 - y2));
+	manhattanDistance(x1, y1, x2, y2) {
+		var dist = Math.abs(x1 - x2) + Math.abs(y1 - y2);
 		return dist;
 	}
 }
-
-export var co_ordinates = new Map(); // Stores the co-ordinates of all the nodes

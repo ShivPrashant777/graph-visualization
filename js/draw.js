@@ -1,4 +1,4 @@
-import { Graph, co_ordinates } from './graph.js';
+import Graph from './graph.js';
 /*
 
     Canvas Initialization
@@ -72,8 +72,6 @@ function getCursorPosition(canvas, event) {
 function createNode(event) {
 	var [x, y] = getCursorPosition(canvas, event);
 	console.log(nodeName);
-	co_ordinates.set(nodeName, [x, y]);
-	g.addVertex(nodeName);
 	var newNode = new Node(nodeName, x, y);
 	g.addVertex(newNode);
 	newNode.fillNode('#025951', '#F0F2F2');
@@ -157,10 +155,10 @@ edgeButton.addEventListener('click', () => {
 				break;
 			}
 		}
-		var graphNodeList = g.AdjList.get(startNode.nodeName);
+		var graphNodeList = g.AdjList.get(startNode);
 
 		var index = graphNodeList.findIndex((j) => {
-			return j == endNode.nodeName;
+			return j.nodeName == endNode.nodeName;
 		});
 
 		if (index == -1) {
@@ -173,7 +171,6 @@ edgeButton.addEventListener('click', () => {
 				startNode.fillNode('#F24501', '#FFF');
 				endNode.fillNode('#F24501', '#FFF');
 				drawEdge(startNode, endNode);
-				g.addEdge(startNode.nodeName, endNode.nodeName);
 				g.addEdge(startNode, endNode);
 				console.log('EDGE DRAWN');
 				console.log(g);
@@ -184,7 +181,7 @@ edgeButton.addEventListener('click', () => {
 });
 
 bfsButton.addEventListener('click', () => {
-	var bfs = g.bfs('A');
+	var bfs = g.bfs(nodeArray[0]);
 	var i = 0;
 	var path = '';
 	const interval = setInterval(() => {
@@ -216,7 +213,7 @@ bfsButton.addEventListener('click', () => {
 });
 
 dfsButton.addEventListener('click', () => {
-	var dfs = g.dfs('A');
+	var dfs = g.dfs(nodeArray[0]);
 	var i = 0;
 	var path = '';
 	const interval = setInterval(() => {
@@ -240,8 +237,8 @@ dfsButton.addEventListener('click', () => {
 		p.classList.add('dfs-p');
 		p.innerHTML = `DFS Path: ${path}`;
 		operations.appendChild(p);
-
 		autoScrollDown();
+
 		// increment i to get next node in the list
 		i += 1;
 	}, 1000);
@@ -254,11 +251,24 @@ clearButton.addEventListener('click', () => {
 });
 
 bestFirstSearchButton.addEventListener('click', () => {
-	var bestFirstSearch = g.bestFirstSearch(
-		startingNode.value,
-		endingNode.value,
-		nodeArray[1]
-	);
+	var index1 = nodeArray.findIndex((j) => {
+		return j.nodeName == startingNode.value;
+	});
+	var index2 = nodeArray.findIndex((j) => {
+		return j.nodeName == endingNode.value;
+	});
+
+	// If wrong nodes are input then display error message
+	if (index1 == -1 || index2 == -1) {
+		console.log('No Path');
+		const p = document.createElement('p');
+		p.innerHTML = `Starting Node or Ending Node is not in the Graph`;
+		operations.appendChild(p);
+		return;
+	}
+	var startNode = nodeArray[index1];
+	var endNode = nodeArray[index2];
+	var bestFirstSearch = g.bestFirstSearch(startNode, endNode, nodeArray);
 	var i = 0;
 	var path = '';
 	const interval = setInterval(() => {
@@ -290,8 +300,26 @@ bestFirstSearchButton.addEventListener('click', () => {
 });
 
 aStarButton.addEventListener('click', () => {
-	var result = g.aStar(nodeArray[0], nodeArray[nodeArray.length - 1]);
-	
+	var path = '';
+	var index1 = nodeArray.findIndex((j) => {
+		return j.nodeName == startingNode.value;
+	});
+	var index2 = nodeArray.findIndex((j) => {
+		return j.nodeName == endingNode.value;
+	});
+
+	// If wrong nodes are input then display error message
+	const p = document.createElement('p');
+	if (index1 == -1 || index2 == -1) {
+		console.log('No Path');
+		p.innerHTML = `Starting Node or Ending Node is not in the Graph`;
+		operations.appendChild(p);
+		return;
+	}
+	var startNode = nodeArray[index1];
+	var endNode = nodeArray[index2];
+
+	g.aStar(startNode, endNode);
 });
 
 function autoScrollDown() {
