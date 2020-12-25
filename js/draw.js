@@ -1,5 +1,19 @@
-import Graph from './graph.js';
-import Node from './nodeElement.js';
+import {
+	getCursorPosition,
+	createNode,
+	drawEdge,
+	showOperation,
+	vertexMouseMove,
+	cleanSlate,
+	nodeArray,
+	g,
+} from './utils.js';
+
+// COLORS
+var bfsColor = '#BD0A1C';
+var dfsColor = '#0029B2';
+var bestFirstSearchColor = '#FF46BA';
+
 /*
 
     Canvas Initialization
@@ -15,13 +29,6 @@ var ctx = canvas.getContext('2d');
 ctx.fillStyle = 'rgb(240, 240, 240)';
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-// COLORS
-var baseColor = '#00BA6C';
-var edgeColor = '#F26101';
-var bfsColor = '#BD0A1C';
-var dfsColor = '#0029B2';
-var bestFirstSearchColor = '#FF46BA';
-
 // DOM Elements
 var vertexButton = document.getElementById('vertexButton');
 var edgeButton = document.getElementById('edgeButton');
@@ -34,68 +41,7 @@ var startingNode = document.getElementById('start-node');
 var endingNode = document.getElementById('end-node');
 var aStarButton = document.getElementById('aStarButton');
 
-var operations = document.getElementById('operations');
 var modeName = document.getElementById('mode-name');
-
-/*
-
-	Utitly functions
-	
-*/
-
-// Gets Cursor's X and Y co-ordinates
-function getCursorPosition(canvas, event) {
-	const rect = canvas.getBoundingClientRect();
-	const x = event.clientX - rect.left;
-	const y = event.clientY - rect.top;
-	return [x, y];
-}
-
-// Adds Node to the GRAPH and fills it
-function createNode(event) {
-	var [x, y] = getCursorPosition(canvas, event);
-	for (var node of nodeArray) {
-		if (node.isPointInNode(x, y, 'vertex')) {
-			return;
-		}
-	}
-
-	var newNode = new Node(varNodeName, x, y);
-	g.addVertex(newNode);
-	g.fillNode(newNode, baseColor);
-	nodeArray.push(newNode);
-
-	// Display operation
-	var msg = `Created Vertex: ${varNodeName}`;
-	showOperation(msg);
-
-	//Update next Node's Name
-	varNodeName = String.fromCharCode(varNodeName.charCodeAt(0) + 1);
-}
-
-// Draws an Edge Between StartNode and EndNode
-function drawEdge(startNode, endNode) {
-	ctx.beginPath();
-	ctx.strokeStyle = '#000';
-	ctx.moveTo(startNode.x, startNode.y);
-	ctx.lineTo(endNode.x, endNode.y);
-	ctx.stroke();
-	// refill node with new color
-	g.fillNode(startNode, edgeColor);
-	g.fillNode(endNode, edgeColor);
-	// Display operation
-	var msg = `Created Edge From ${startNode.nodeName} to ${endNode.nodeName}`;
-	showOperation(msg);
-}
-
-// Display the operation in side panel
-function showOperation(message, classname = 'msg-p') {
-	const p = document.createElement('p');
-	p.classList.add(classname);
-	p.innerHTML = message;
-	operations.appendChild(p);
-	autoScrollDown();
-}
 
 // Create an interval to display an operation
 function createInterval(array, operation, color) {
@@ -127,29 +73,13 @@ function createInterval(array, operation, color) {
 	}, 1000);
 }
 
-// Change Mouse Pointer if it is on any Node (vertex mode)
-function vertexMouseMove() {
-	var [x, y] = getCursorPosition(canvas, event);
-	canvas.style.cursor = 'default';
-	for (var node of nodeArray) {
-		if (node.isPointInNode(x, y)) {
-			canvas.style.cursor = 'pointer';
-		}
-	}
-}
-
-var nodeArray = []; // Store all the NODES in an array
-var varNodeName = 'A'; // First Node's Name
 var mode = undefined; // Draw Mode (Vertex or Edge)
-
-var g = new Graph();
 
 vertexButton.addEventListener('click', () => {
 	vertexButton.setAttribute('data-clicked', 'true');
 	edgeButton.setAttribute('data-clicked', 'false');
 	modeName.innerHTML = 'Vertex';
 	mode = 'vertex';
-	console.log(`Mode: ${mode}`);
 	canvas.addEventListener('click', createNode);
 });
 
@@ -164,7 +94,6 @@ edgeButton.addEventListener('click', () => {
 	modeName.innerHTML = 'Edge';
 	canvas.removeEventListener('click', createNode);
 	mode = 'edge';
-	console.log(`Mode: ${mode}`);
 	var startNode,
 		endNode = undefined;
 	canvas.addEventListener('mousedown', () => {
@@ -197,7 +126,6 @@ edgeButton.addEventListener('click', () => {
 					{
 						drawEdge(startNode, endNode);
 						g.addEdge(startNode, endNode);
-						console.log(g);
 					}
 				}
 				break;
@@ -226,7 +154,6 @@ bestFirstSearchButton.addEventListener('click', () => {
 
 	// If wrong nodes are input then display error message
 	if (index1 == -1 || index2 == -1) {
-		console.log('No Path');
 		var msg = `Error: Starting Node or Ending Node is not in the Graph`;
 		showOperation(msg);
 		return;
@@ -234,6 +161,11 @@ bestFirstSearchButton.addEventListener('click', () => {
 	var startNode = nodeArray[index1];
 	var endNode = nodeArray[index2];
 	var bestFirstSearch = g.bestFirstSearch(startNode, endNode, nodeArray);
+	if (bestFirstSearch[bestFirstSearch.length - 1] != endNode.nodeName) {
+		var msg = `Best Fisrst Search Path: No Solution`;
+		showOperation(msg);
+		return;
+	}
 	createInterval(bestFirstSearch, 'BestFirstSearch', bestFirstSearchColor);
 });
 
@@ -248,7 +180,6 @@ aStarButton.addEventListener('click', () => {
 	// If wrong nodes are input then display error message
 	const p = document.createElement('p');
 	if (index1 == -1 || index2 == -1) {
-		console.log('No Path');
 		var msg = `Error: Starting Node or Ending Node is not in the Graph`;
 		showOperation(msg);
 		return;
@@ -270,15 +201,5 @@ clearCanvas.addEventListener('click', () => {
 	// Fill with Light Gray Background
 	ctx.fillStyle = 'rgb(240, 240, 240)';
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
-	console.log(g);
-	console.table(nodeArray);
-	g = new Graph();
-	nodeArray = [];
-	console.log(g);
-	console.table(nodeArray);
-	varNodeName = 'A';
+	cleanSlate();
 });
-
-function autoScrollDown() {
-	operations.scrollTop = operations.scrollHeight;
-}

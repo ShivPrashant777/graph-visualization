@@ -20,19 +20,6 @@ export default class Graph {
 		this.AdjList.get(end).push(start);
 	}
 
-	printGraph() {
-		var graph_keys = this.AdjList.keys();
-
-		for (var i of graph_keys) {
-			var node_neighbors = this.AdjList.get(i);
-			var conc = '';
-			for (var j of node_neighbors) {
-				conc += j + ' ';
-			}
-			console.log(`${i}: ${conc}`);
-		}
-	}
-
 	dfs(startNode) {
 		var visited = {};
 		var ret = [];
@@ -101,7 +88,6 @@ export default class Graph {
 				}
 			}
 		}
-		console.log(path);
 		return ret;
 	}
 
@@ -140,7 +126,6 @@ export default class Graph {
 				}
 				var current = openSet[winner];
 				if (current === end) {
-					console.log(end);
 					done = true;
 				}
 				this.removeFromArray(openSet, current);
@@ -178,7 +163,11 @@ export default class Graph {
 				}
 			} else {
 				done = true;
-				console.log('No Solution');
+				// display path in side panel
+				const p = document.createElement('p');
+				var operations = document.getElementById('operations');
+				p.innerHTML = `A* Path: No Solution`;
+				operations.appendChild(p);
 				clearInterval(interval);
 				return;
 			}
@@ -203,8 +192,6 @@ export default class Graph {
 			}
 
 			if (done) {
-				console.log('A*: ');
-				console.log(path);
 				clearInterval(interval);
 				var result = '';
 
