@@ -1,4 +1,5 @@
 import Graph from './graph.js';
+import Node from './nodeElement.js';
 /*
 
     Canvas Initialization
@@ -14,41 +15,26 @@ var ctx = canvas.getContext('2d');
 ctx.fillStyle = 'rgb(240, 240, 240)';
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-/*
+// COLORS
+var baseColor = '#00BA6C';
+var edgeColor = '#F26101';
+var bfsColor = '#BD0A1C';
+var dfsColor = '#0029B2';
+var bestFirstSearchColor = '#FF46BA';
 
-    NODE
+// DOM Elements
+var vertexButton = document.getElementById('vertexButton');
+var edgeButton = document.getElementById('edgeButton');
+var bfsButton = document.getElementById('bfsButton');
+var dfsButton = document.getElementById('dfsButton');
+var clearButton = document.getElementById('clear');
+var bestFirstSearchButton = document.getElementById('bestFirstSearchButton');
+var startingNode = document.getElementById('start-node');
+var endingNode = document.getElementById('end-node');
+var aStarButton = document.getElementById('aStarButton');
 
-*/
-
-class Node {
-	constructor(nodeName, x, y) {
-		this.nodeName = nodeName;
-		this.x = x;
-		this.y = y;
-		this.f = 0;
-		this.g = 0;
-		this.h = 0;
-		this.previous = undefined;
-	}
-
-	// Fills the node with the specified color
-	fillNode(nodeColor, textColor) {
-		ctx.beginPath();
-		ctx.arc(this.x, this.y, 35, 0, 2 * Math.PI);
-		ctx.fillStyle = nodeColor;
-		ctx.fill();
-		ctx.fillStyle = textColor;
-		ctx.font = '30px Arial';
-		ctx.fillText(this.nodeName, this.x - 10, this.y + 10);
-	}
-
-	// Check if the Clicked Point is approx. near to the Node
-	isPointInNode(mouseX, mouseY) {
-		if (Math.abs(mouseX - this.x) < 40 && Math.abs(mouseY - this.y) < 40) {
-			return true;
-		}
-	}
-}
+var operations = document.getElementById('operations');
+var modeName = document.getElementById('mode-name');
 
 /*
 
@@ -56,32 +42,25 @@ class Node {
 	
 */
 
-var operations = document.getElementById('operations');
-var modeName = document.getElementById('mode-name');
-
 // Gets Cursor's X and Y co-ordinates
 function getCursorPosition(canvas, event) {
 	const rect = canvas.getBoundingClientRect();
 	const x = event.clientX - rect.left;
 	const y = event.clientY - rect.top;
-	console.log('x: ' + x + ' y: ' + y);
 	return [x, y];
 }
 
 // Adds Node to the GRAPH and fills it
 function createNode(event) {
 	var [x, y] = getCursorPosition(canvas, event);
-	console.log(nodeName);
 	var newNode = new Node(nodeName, x, y);
 	g.addVertex(newNode);
-	newNode.fillNode('#025951', '#F0F2F2');
+	g.fillNode(newNode, baseColor);
 	nodeArray.push(newNode);
 
-	// Display the operation in side panel
-	const p = document.createElement('p');
-	p.innerHTML = `Created Vertex: ${nodeName}`;
-	operations.appendChild(p);
-	autoScrollDown();
+	// Display operation
+	var msg = `Created Vertex: ${nodeName}`;
+	showOperation(msg);
 
 	//Update next Node's Name
 	nodeName = String.fromCharCode(nodeName.charCodeAt(0) + 1);
@@ -94,11 +73,51 @@ function drawEdge(startNode, endNode) {
 	ctx.moveTo(startNode.x, startNode.y);
 	ctx.lineTo(endNode.x, endNode.y);
 	ctx.stroke();
-	// Display the operation in side panel
+	// refill node with new color
+	g.fillNode(startNode, edgeColor);
+	g.fillNode(endNode, edgeColor);
+	// Display operation
+	var msg = `Created Edge From ${startNode.nodeName} to ${endNode.nodeName}`;
+	showOperation(msg);
+}
+
+// Display the operation in side panel
+function showOperation(message, classname = 'msg-p') {
 	const p = document.createElement('p');
-	p.innerHTML = `Created Edge From ${startNode.nodeName} to ${endNode.nodeName}`;
+	p.classList.add(classname);
+	p.innerHTML = message;
 	operations.appendChild(p);
 	autoScrollDown();
+}
+
+// Create an interval to display an operation
+function createInterval(array, operation, color) {
+	var className = operation + '-p';
+	var i = 0;
+	var path = '';
+	const interval = setInterval(() => {
+		if (i == array.length - 1) {
+			clearInterval(interval);
+		}
+		// Remove the last element with classname = ${opeation}-p
+		if (i > 0) {
+			var selectList = document.querySelectorAll('.' + className);
+			operations.removeChild(selectList[selectList.length - 1]);
+		}
+
+		var index = nodeArray.findIndex((j) => {
+			return j.nodeName == array[i];
+		});
+		g.fillNode(nodeArray[index], color);
+		path += ' ' + array[i];
+
+		// Display operation
+		var msg = `${operation} Path: ${path}`;
+		showOperation(msg, className);
+
+		// increment i to get next node in the list
+		i += 1;
+	}, 1000);
 }
 
 var nodeArray = []; // Store all the NODES in an array
@@ -106,16 +125,6 @@ var nodeName = 'A'; // First Node's Name
 var mode = undefined; // Draw Mode (Vertex or Edge)
 
 var g = new Graph();
-
-var vertexButton = document.getElementById('vertexButton');
-var edgeButton = document.getElementById('edgeButton');
-var bfsButton = document.getElementById('bfsButton');
-var dfsButton = document.getElementById('dfsButton');
-var clearButton = document.getElementById('clear');
-var bestFirstSearchButton = document.getElementById('bestFirstSearchButton');
-var startingNode = document.getElementById('start-node');
-var endingNode = document.getElementById('end-node');
-var aStarButton = document.getElementById('aStarButton');
 
 vertexButton.addEventListener('click', () => {
 	vertexButton.setAttribute('data-clicked', 'true');
@@ -167,14 +176,9 @@ edgeButton.addEventListener('click', () => {
 				endNode != undefined &&
 				j.nodeName != startNode.nodeName
 			) {
-				console.log(nodeArray);
-				startNode.fillNode('#F24501', '#FFF');
-				endNode.fillNode('#F24501', '#FFF');
 				drawEdge(startNode, endNode);
 				g.addEdge(startNode, endNode);
 				console.log('EDGE DRAWN');
-				console.log(g);
-				console.log(nodeArray);
 			}
 		}
 	});
@@ -182,72 +186,12 @@ edgeButton.addEventListener('click', () => {
 
 bfsButton.addEventListener('click', () => {
 	var bfs = g.bfs(nodeArray[0]);
-	var i = 0;
-	var path = '';
-	const interval = setInterval(() => {
-		if (i == bfs.length - 1) {
-			clearInterval(interval);
-		}
-		// Remove the last element with classname = bfs-p
-		if (i > 0) {
-			var selectList = document.querySelectorAll('.bfs-p');
-			operations.removeChild(selectList[selectList.length - 1]);
-		}
-
-		var index = nodeArray.findIndex((j) => {
-			return j.nodeName == bfs[i];
-		});
-		nodeArray[index].fillNode('#D82475', '#FFF');
-		path += ' ' + bfs[i];
-
-		// Display the operation in side panel
-		const p = document.createElement('p');
-		p.classList.add('bfs-p');
-		p.innerHTML = `BFS Path: ${path}`;
-		operations.appendChild(p);
-		autoScrollDown();
-
-		// increment i to get next node in the list
-		i += 1;
-	}, 1000);
+	createInterval(bfs, 'BFS', bfsColor);
 });
 
 dfsButton.addEventListener('click', () => {
 	var dfs = g.dfs(nodeArray[0]);
-	var i = 0;
-	var path = '';
-	const interval = setInterval(() => {
-		if (i == dfs.length - 1) {
-			clearInterval(interval);
-		}
-		// Remove the last element with classname = dfs-p
-		if (i > 0) {
-			var selectList = document.querySelectorAll('.dfs-p');
-			operations.removeChild(selectList[selectList.length - 1]);
-		}
-
-		var index = nodeArray.findIndex((j) => {
-			return j.nodeName == dfs[i];
-		});
-		nodeArray[index].fillNode('#033E8C', '#FFF');
-		path += ' ' + dfs[i];
-
-		// Display the operation in side panel
-		const p = document.createElement('p');
-		p.classList.add('dfs-p');
-		p.innerHTML = `DFS Path: ${path}`;
-		operations.appendChild(p);
-		autoScrollDown();
-
-		// increment i to get next node in the list
-		i += 1;
-	}, 1000);
-});
-
-clearButton.addEventListener('click', () => {
-	for (var node of nodeArray) {
-		node.fillNode('#025951', '#F0F2F2');
-	}
+	createInterval(dfs, 'DFS', dfsColor);
 });
 
 bestFirstSearchButton.addEventListener('click', () => {
@@ -261,46 +205,17 @@ bestFirstSearchButton.addEventListener('click', () => {
 	// If wrong nodes are input then display error message
 	if (index1 == -1 || index2 == -1) {
 		console.log('No Path');
-		const p = document.createElement('p');
-		p.innerHTML = `Starting Node or Ending Node is not in the Graph`;
-		operations.appendChild(p);
+		var msg = `Error: Starting Node or Ending Node is not in the Graph`;
+		showOperation(msg);
 		return;
 	}
 	var startNode = nodeArray[index1];
 	var endNode = nodeArray[index2];
 	var bestFirstSearch = g.bestFirstSearch(startNode, endNode, nodeArray);
-	var i = 0;
-	var path = '';
-	const interval = setInterval(() => {
-		if (i == bestFirstSearch.length - 1) {
-			clearInterval(interval);
-		}
-		// Remove the last element with classname = .bestFirstSearch-p
-		if (i > 0) {
-			var selectList = document.querySelectorAll('.bestFirstSearch-p');
-			operations.removeChild(selectList[selectList.length - 1]);
-		}
-
-		var index = nodeArray.findIndex((j) => {
-			return j.nodeName == bestFirstSearch[i];
-		});
-		nodeArray[index].fillNode('#B159FF', '#011C40');
-		path += ' ' + bestFirstSearch[i];
-
-		// Display the operation in side panel
-		const p = document.createElement('p');
-		p.classList.add('bestFirstSearch-p');
-		p.innerHTML = `Best First Search Path: ${path}`;
-		operations.appendChild(p);
-		autoScrollDown();
-
-		// increment i to get next node in the list
-		i += 1;
-	}, 1000);
+	createInterval(bestFirstSearch, 'BestFirstSearch', bestFirstSearchColor);
 });
 
 aStarButton.addEventListener('click', () => {
-	var path = '';
 	var index1 = nodeArray.findIndex((j) => {
 		return j.nodeName == startingNode.value;
 	});
@@ -312,14 +227,20 @@ aStarButton.addEventListener('click', () => {
 	const p = document.createElement('p');
 	if (index1 == -1 || index2 == -1) {
 		console.log('No Path');
-		p.innerHTML = `Starting Node or Ending Node is not in the Graph`;
-		operations.appendChild(p);
+		var msg = `Error: Starting Node or Ending Node is not in the Graph`;
+		showOperation(msg);
 		return;
 	}
 	var startNode = nodeArray[index1];
 	var endNode = nodeArray[index2];
 
 	g.aStar(startNode, endNode);
+});
+
+clearButton.addEventListener('click', () => {
+	for (var node of nodeArray) {
+		g.fillNode(node, '#00BA6C');
+	}
 });
 
 function autoScrollDown() {

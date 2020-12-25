@@ -105,7 +105,7 @@ export default class Graph {
 		return ret;
 	}
 
-	fillNode(node, nodeColor, textColor) {
+	fillNode(node, nodeColor = '#00BA6C', textColor = '#FFFFFF') {
 		ctx.beginPath();
 		ctx.arc(node.x, node.y, 35, 0, 2 * Math.PI);
 		ctx.fillStyle = nodeColor;
@@ -113,6 +113,9 @@ export default class Graph {
 		ctx.fillStyle = textColor;
 		ctx.font = '30px Arial';
 		ctx.fillText(node.nodeName, node.x - 10, node.y + 10);
+		ctx.arc(node.x, node.y, 35, 0, 2 * Math.PI);
+		ctx.lineWidth = 0.2;
+		ctx.stroke();
 	}
 
 	aStar(start, end) {
