@@ -144,7 +144,7 @@ export default class Graph {
 								neighbor.x,
 								neighbor.y
 							);
-						if (openSet.includes(current)) {
+						if (openSet.includes(neighbor)) {
 							if (tempG < neighbor.g) {
 								newPath = true;
 								neighbor.g = tempG;
