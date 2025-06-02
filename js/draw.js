@@ -1,205 +1,283 @@
-import {
-	getCursorPosition,
-	createNode,
-	drawEdge,
-	showOperation,
-	vertexMouseMove,
-	cleanSlate,
-	nodeArray,
-	g,
-} from './utils.js';
-
-// COLORS
-var bfsColor = '#BD0A1C';
-var dfsColor = '#0029B2';
-var bestFirstSearchColor = '#FF46BA';
+import { graph, radius, tooltip } from './constants.js';
+import { getNodeAtPosition, isTooClose, log, disableButtons } from './utils.js';
 
 /*
-
-    Canvas Initialization
-
+    Canvas Initialization   
 */
 var canvas = document.getElementById('myCanvas');
-canvas.width = window.innerWidth - 500;
-canvas.height = window.innerHeight - 150;
-
 var ctx = canvas.getContext('2d');
+var mouseX = null;
+var mouseY = null;
+var mode = 'vertex'; // vertex | edge
+var selectedNode = null;
+var hoveredNode = null;
+var visitedNodes = new Set(); // track visited for animation
+var vertexModeBtn = document.getElementById('vertexModeBtn');
+var edgeModeBtn = document.getElementById('edgeModeBtn');
+var isTraversing = false;
 
-// Fill with Light Gray Background
-ctx.fillStyle = 'rgb(240, 240, 240)';
-ctx.fillRect(0, 0, canvas.width, canvas.height);
+// Mode Buttons
+vertexModeBtn.addEventListener('click', () => {
+	vertexModeBtn.setAttribute('data-selected', 'true');
+	edgeModeBtn.setAttribute('data-selected', 'false');
+	mode = 'vertex';
+	selectedNode = null;
+	drawGraph();
+});
 
-// DOM Elements
-var vertexButton = document.getElementById('vertexButton');
-var edgeButton = document.getElementById('edgeButton');
-var bfsButton = document.getElementById('bfsButton');
-var dfsButton = document.getElementById('dfsButton');
-var clearButton = document.getElementById('clear');
-var clearCanvas = document.getElementById('clearCanvas');
-var bestFirstSearchButton = document.getElementById('bestFirstSearchButton');
-var startingNode = document.getElementById('start-node');
-var endingNode = document.getElementById('end-node');
-var aStarButton = document.getElementById('aStarButton');
+edgeModeBtn.addEventListener('click', () => {
+	edgeModeBtn.setAttribute('data-selected', 'true');
+	vertexModeBtn.setAttribute('data-selected', 'false');
+	mode = 'edge';
+	selectedNode = null;
+	drawGraph();
+});
 
-var modeName = document.getElementById('mode-name');
+// disable default right click behaviour
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-// Create an interval to display an operation
-function createInterval(array, operation, color) {
-	var className = operation + '-p';
-	var i = 0;
-	var path = '';
-	const interval = setInterval(() => {
-		if (i == array.length - 1) {
-			clearInterval(interval);
+canvas.addEventListener('mousemove', (e) => {
+	const rect = canvas.getBoundingClientRect();
+	mouseX = e.clientX - rect.left;
+	mouseY = e.clientY - rect.top;
+
+	// display tooltip when mouse pointer is too close to another node
+	if (mode === 'vertex') {
+		const tooClose = isTooClose(mouseX, mouseY);
+		if (tooClose) {
+			tooltip.classList.remove('hidden');
+			tooltip.style.left = `${e.clientX + 10}px`;
+			tooltip.style.top = `${e.clientY + 10}px`;
+		} else {
+			tooltip.classList.add('hidden');
 		}
-		// Remove the last element with classname = ${opeation}-p
-		if (i > 0) {
-			var selectList = document.querySelectorAll('.' + className);
-			operations.removeChild(selectList[selectList.length - 1]);
-		}
+	}
 
-		var index = nodeArray.findIndex((j) => {
-			return j.nodeName == array[i];
-		});
-		g.fillNode(nodeArray[index], color);
-		path += ' ' + array[i];
+	// Detect hovered node in edge mode
+	if (mode === 'edge') {
+		hoveredNode = getNodeAtPosition(mouseX, mouseY);
+	} else {
+		hoveredNode = null;
+	}
 
-		// Display operation
-		var msg = `${operation} Path: ${path}`;
-		showOperation(msg, className);
+	drawGraph();
+});
 
-		// increment i to get next node in the list
-		i += 1;
-	}, 1000);
+// Reset mouseX and mouseY when mouse leaves the canvas
+canvas.addEventListener('mouseleave', () => {
+	mouseX = null;
+	mouseY = null;
+	drawGraph();
+});
+
+// Resize canvas to match 80% width and 100% height
+function resizeCanvas() {
+	canvas.width = window.innerWidth * 0.8;
+	canvas.height = window.innerHeight;
+	drawGraph(); // Redraw after resizing
 }
 
-var mode = undefined; // Draw Mode (Vertex or Edge)
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-vertexButton.addEventListener('click', () => {
-	vertexButton.setAttribute('data-clicked', 'true');
-	edgeButton.setAttribute('data-clicked', 'false');
-	modeName.innerHTML = 'Vertex';
-	mode = 'vertex';
-	canvas.addEventListener('click', createNode);
-});
+function drawGraph() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	const nodes = graph.getNodes();
 
-vertexButton.addEventListener('mousemove', () => {
-	canvas.removeEventListener('mousemove', vertexMouseMove);
-	canvas.style.cursor = 'pointer';
-});
-
-edgeButton.addEventListener('click', () => {
-	vertexButton.setAttribute('data-clicked', 'false');
-	edgeButton.setAttribute('data-clicked', 'true');
-	modeName.innerHTML = 'Edge';
-	canvas.removeEventListener('click', createNode);
-	mode = 'edge';
-	var startNode,
-		endNode = undefined;
-	canvas.addEventListener('mousedown', () => {
-		var [x, y] = getCursorPosition(canvas, event);
-		for (var i of nodeArray) {
-			if (i.isPointInNode(x, y)) {
-				startNode = i;
-				break;
+	// Draw edges
+	for (const node of nodes) {
+		for (const neighborId of graph.getEdges(node.id)) {
+			const neighbor = nodes.find((n) => n.id === neighborId);
+			if (neighbor && node.id < neighbor.id) {
+				ctx.beginPath();
+				ctx.moveTo(node.x, node.y);
+				ctx.lineTo(neighbor.x, neighbor.y);
+				ctx.strokeStyle = '#555';
+				ctx.lineWidth = 2;
+				ctx.stroke();
 			}
 		}
-	});
+	}
 
-	canvas.addEventListener('mousemove', vertexMouseMove);
+	// Draw nodes
+	for (const node of nodes) {
+		// Create radial gradient for 3D effect
+		const gradient = ctx.createRadialGradient(
+			node.x - 3,
+			node.y - 3,
+			0,
+			node.x,
+			node.y,
+			radius
+		);
+		gradient.addColorStop(0.3, '#6ea8ff');
+		gradient.addColorStop(1, '#2a5bff');
 
-	canvas.addEventListener('mouseup', () => {
-		var [x, y] = getCursorPosition(canvas, event);
-		if (!startNode) {
+		// Shadow settings for raised look
+		ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+		ctx.shadowBlur = 6;
+		ctx.shadowOffsetX = 2;
+		ctx.shadowOffsetY = 2;
+
+		// Draw the node with gradient
+		ctx.beginPath();
+		ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+
+		if (selectedNode && selectedNode.id === node.id) {
+			// Selected node: yellow
+			ctx.fillStyle = 'yellow';
+		} else if (visitedNodes.has(node.id)) {
+			// Visited nodes: green gradient
+			const visitGradient = ctx.createRadialGradient(
+				node.x - 3,
+				node.y - 3,
+				0,
+				node.x,
+				node.y,
+				radius
+			);
+			visitGradient.addColorStop(0.3, '#a8e6a1');
+			visitGradient.addColorStop(1, '#4CAF50');
+			ctx.fillStyle = visitGradient;
+		} else {
+			// Default node gradient
+			ctx.fillStyle = gradient;
+		}
+		ctx.fill();
+
+		// Highlight node on mouseover in Edge Mode
+		if (mode === 'edge' && hoveredNode && hoveredNode.id === node.id) {
+			ctx.beginPath();
+			ctx.arc(node.x, node.y, radius + 4, 0, Math.PI * 2);
+			ctx.strokeStyle = 'red';
+			ctx.lineWidth = 3;
+			ctx.stroke();
+		}
+		ctx.lineWidth = 1;
+		ctx.stroke();
+
+		// Draw label
+		ctx.fillStyle = '#fff';
+		ctx.font = '20px Arial';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.fillText(node.id, node.x, node.y);
+
+		// Reset shadow to avoid affecting other drawings
+		ctx.shadowColor = 'transparent';
+		ctx.shadowBlur = 0;
+		ctx.shadowOffsetX = 0;
+		ctx.shadowOffsetY = 0;
+	}
+
+	// Draw preview circle for vertex placement
+	if (mode === 'vertex' && mouseX !== null && mouseY !== null) {
+		const tooClose = isTooClose(mouseX, mouseY);
+
+		ctx.beginPath();
+		ctx.arc(mouseX, mouseY, radius, 0, Math.PI * 2);
+		ctx.strokeStyle = tooClose ? 'red' : 'green';
+		ctx.lineWidth = 2;
+		ctx.setLineDash([5, 5]);
+		ctx.stroke();
+		ctx.setLineDash([]); // reset dash
+	}
+}
+
+canvas.addEventListener('click', (e) => {
+	const rect = canvas.getBoundingClientRect();
+	const x = e.clientX - rect.left;
+	const y = e.clientY - rect.top;
+
+	if (mode === 'vertex') {
+		if (isTooClose(x, y)) {
+			console.warn('Too close to another node. Try a different spot.');
 			return;
 		}
-		for (var j of nodeArray) {
-			if (j.isPointInNode(x, y) && j.nodeName != startNode.nodeName) {
-				endNode = j;
-				var graphNodeList = g.AdjList.get(startNode);
-
-				var index = graphNodeList.findIndex((j) => {
-					return j.nodeName == endNode.nodeName;
-				});
-
-				if (index == -1) {
-					{
-						drawEdge(startNode, endNode);
-						g.addEdge(startNode, endNode);
-					}
+		const node = graph.addNode(x, y);
+		log(`Node ${node.id} added at (${x}, ${y})`, 'add');
+		drawGraph();
+	} else if (mode === 'edge') {
+		const clickedPos = getNodeAtPosition(x, y);
+		// if selected position is not whitespace
+		if (clickedPos) {
+			// Toggle selection
+			if (selectedNode && selectedNode.id === clickedPos.id) {
+				selectedNode = null; // Deselect if same node
+			} else if (!selectedNode) {
+				selectedNode = clickedPos; // First selection
+			} else {
+				// Add edge if not already added and reset selection
+				if (!graph.hasEdge(selectedNode.id, clickedPos.id)) {
+					graph.addEdge(selectedNode.id, clickedPos.id);
+					log(
+						`Edge added between ${selectedNode.id} and ${clickedPos.id}`,
+						'add'
+					);
 				}
-				break;
+				selectedNode = null;
 			}
+			drawGraph();
 		}
-	});
+	}
 });
 
-bfsButton.addEventListener('click', () => {
-	var bfs = g.bfs(nodeArray[0]);
-	createInterval(bfs, 'BFS', bfsColor);
+// Right Click to Delete a Node
+canvas.addEventListener('contextmenu', (e) => {
+	e.preventDefault();
+	const rect = canvas.getBoundingClientRect();
+	const x = e.clientX - rect.left;
+	const y = e.clientY - rect.top;
+
+	const clickedPos = getNodeAtPosition(x, y);
+	// if selected position is not whitespace
+	if (clickedPos) {
+		// Remove selected node if it's being deleted
+		if (selectedNode && selectedNode.id === clickedPos.id) {
+			selectedNode = null;
+		}
+
+		graph.removeNode(clickedPos.id);
+		log(`Node ${clickedPos.id} removed`, 'delete');
+		drawGraph();
+	}
 });
 
-dfsButton.addEventListener('click', () => {
-	var dfs = g.dfs(nodeArray[0]);
-	createInterval(dfs, 'DFS', dfsColor);
-});
-
-bestFirstSearchButton.addEventListener('click', () => {
-	var index1 = nodeArray.findIndex((j) => {
-		return j.nodeName == startingNode.value;
-	});
-	var index2 = nodeArray.findIndex((j) => {
-		return j.nodeName == endingNode.value;
-	});
-
-	// If wrong nodes are input then display error message
-	if (index1 == -1 || index2 == -1) {
-		var msg = `Error: Starting Node or Ending Node is not in the Graph`;
-		showOperation(msg);
+async function startDFS() {
+	if (!selectedNode) {
+		alert('Select a starting node in Edge Mode to begin DFS');
 		return;
 	}
-	var startNode = nodeArray[index1];
-	var endNode = nodeArray[index2];
-	var bestFirstSearch = g.bestFirstSearch(startNode, endNode, nodeArray);
-	if (bestFirstSearch[bestFirstSearch.length - 1] != endNode.nodeName) {
-		var msg = `Best Fisrst Search Path: No Solution`;
-		showOperation(msg);
+	disableButtons(true);
+	visitedNodes.clear();
+	log(`DFS Traversal started from ${selectedNode.id}`);
+	await graph.dfs(selectedNode.id, (id) => {
+		console.log(id);
+		visitedNodes.add(id);
+		log(`Visited node ${id}`, 'traversal');
+		drawGraph();
+	});
+	log(`DFS Traversal Ended`);
+	disableButtons(false);
+}
+
+async function startBFS() {
+	if (!selectedNode) {
+		alert('Please select a starting node for BFS', 'delete');
 		return;
 	}
-	createInterval(bestFirstSearch, 'BestFirstSearch', bestFirstSearchColor);
-});
-
-aStarButton.addEventListener('click', () => {
-	var index1 = nodeArray.findIndex((j) => {
-		return j.nodeName == startingNode.value;
+	disableButtons(true);
+	visitedNodes.clear();
+	drawGraph();
+	log(`BFS Traversal started from ${selectedNode.id}`);
+	await graph.bfs(selectedNode.id, (id) => {
+		visitedNodes.add(id);
+		log(`Visited node ${id}`, 'traversal');
+		drawGraph();
 	});
-	var index2 = nodeArray.findIndex((j) => {
-		return j.nodeName == endingNode.value;
-	});
+	log(`BFS Traversal Ended`);
+	disableButtons(false);
+}
 
-	// If wrong nodes are input then display error message
-	const p = document.createElement('p');
-	if (index1 == -1 || index2 == -1) {
-		var msg = `Error: Starting Node or Ending Node is not in the Graph`;
-		showOperation(msg);
-		return;
-	}
-	var startNode = nodeArray[index1];
-	var endNode = nodeArray[index2];
-
-	g.aStar(startNode, endNode);
-});
-
-clearButton.addEventListener('click', () => {
-	for (var node of nodeArray) {
-		g.fillNode(node, '#00BA6C');
-	}
-});
-
-clearCanvas.addEventListener('click', () => {
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	// Fill with Light Gray Background
-	ctx.fillStyle = 'rgb(240, 240, 240)';
-	ctx.fillRect(0, 0, canvas.width, canvas.height);
-	cleanSlate();
-});
+window.startDFS = startDFS;
+window.startBFS = startBFS;

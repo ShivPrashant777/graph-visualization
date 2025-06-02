@@ -1,54 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Create custom graphs, generate BFS, DFS animations and find path between nodes using best first search or A* Algorithm." />
-    <meta name="keywords"
-        content="graph visualization, breadth-first-search, depth-first-search, best-first-search, A* Algorithm, path-finding" />
-    <link rel="stylesheet" href="css/main.css">
-    <title>Graph Visualization</title>
-</head>
-
-<body>
-    <div class="container">
-        <canvas id="myCanvas" style="border:1px solid #000000;"></canvas>
-        <div id="display-panel">
-            <div id="top">
-                <h1>
-                    Operations
-                </h1>
-                <h1>Mode: <span id="mode-name">Pointer</span> </h1>
-            </div>
-            <div id="operations">
-            </div>
-        </div>
-    </div>
-    <div id="controls">
-        <h2>Controls</h2>
-        <div class="left">
-            <button id="vertexButton" data-clicked="false">Add Vertex</button>
-            <button id="edgeButton" data-clicked="false">Add Edge</button>
-            <button id="bfsButton">BFS</button>
-            <button id="dfsButton">DFS</button>
-
-            <button id="clear">Clear Nodes</button>
-            <button id="clearCanvas">Clear Canvas</button>
-        </div>
-        <div class="right">
-            <form>
-                <label><b>Starting Node</b></label>
-                <input type="text" name="message" id="start-node">
-                <label><b>Ending Node</b></label>
-                <input type="text" name="message" id="end-node">
-            </form>
-            <button id="bestFirstSearchButton">Best First Search</button>
-            <button id="aStarButton">A* Search</button>
-        </div>
-    </div>
-    <script type="module" src="js/draw.js"></script>
-</body>
-
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta
+			name="description"
+			content="Create custom graphs, generate BFS, DFS animations and find path between nodes using best first search or A* Algorithm."
+		/>
+		<meta
+			name="keywords"
+			content="graph visualization, breadth-first-search, depth-first-search, best-first-search, A* Algorithm, path-finding"
+		/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+			integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		/>
+		<title>graph-visualization</title>
+	</head>
+	<body>
+		<div id="tooltip" class="hidden">Too close to another node</div>
+		<div class="toolbar">
+			<button id="vertexModeBtn" data-selected="true">
+				<i class="fa-solid fa-circle-dot"></i> Vertex Mode
+			</button>
+			<button id="edgeModeBtn" data-selected="false">
+				<i class="fa-solid fa-circle-nodes"></i> Edge Mode
+			</button>
+			<button id="startDFSBtn" onclick="startDFS()">Start DFS</button>
+			<button id="startBFSBtn" onclick="startBFS()">Start BFS</button>
+		</div>
+		<div class="container">
+			<canvas id="myCanvas" width="800" height="600"></canvas>
+			<div id="console">
+				<div class="top">
+					<h3>> Console</h3>
+					<button onclick="clearLogs()">Clear Logs</button>
+				</div>
+				<hr />
+				<div id="log"></div>
+			</div>
+		</div>
+		<script type="module" src="js/draw.js"></script>
+	</body>
 </html>
