@@ -104,36 +104,47 @@ export default class Graph {
 		}
 	}
 
-	// bestFirstSearch(startNode, endNode, nodeArray) {
-	// 	var visited = {};
-	// 	for (var k of nodeArray) {
-	// 		visited[k.nodeName] = false;
-	// 	}
-	// 	var ret = [];
-	// 	var pq = new PriorityQueue();
-	// 	visited[startNode.nodeName] = true;
-	// 	var priority = this.euclidianDistance(endNode, startNode);
-	// 	pq.enqueue(startNode, priority);
-	// 	var path = '';
-	// 	while (!pq.isEmpty()) {
-	// 		var first = pq.front();
-	// 		path += ' ' + first.node.nodeName;
-	// 		ret.push(first.node.nodeName);
-	// 		pq.dequeue();
-	// 		if (first.node.nodeName == endNode.nodeName) {
-	// 			break;
-	// 		}
-	// 		var neighbors = this.AdjList.get(first.node);
-	// 		for (var i of neighbors) {
-	// 			if (visited[i.nodeName] == false) {
-	// 				visited[i.nodeName] = true;
-	// 				priority = this.euclidianDistance(endNode, i);
-	// 				pq.enqueue(i, priority);
-	// 			}
-	// 		}
-	// 	}
-	// 	return ret;
-	// }
+	// Greedy Best First Search
+	async bestFirstSearch(startNodeId, endNodeId, visitCallback, delay = 1000) {
+		const visited = new Set();
+		const parent = new Map();
+		const pq = new PriorityQueue();
+
+		pq.enqueue(startNodeId, 0);
+
+		while (!pq.isEmpty()) {
+			const current = pq.dequeue();
+			if (visited.has(current)) continue;
+
+			visited.add(current);
+			visitCallback(current);
+			await new Promise((res) => setTimeout(res, delay));
+			if (current === endNodeId) break;
+
+			for (const neighbor of this.adjList.get(current) || []) {
+				if (!visited.has(neighbor)) {
+					const currentNode = this.getNodeById(current);
+					const neighborNode = this.getNodeById(neighbor);
+					const dx = currentNode.x - neighborNode.x;
+					const dy = currentNode.y - neighborNode.y;
+					const heuristic = Math.sqrt(dx * dx + dy * dy);
+
+					pq.enqueue(neighbor, heuristic);
+					if (!parent.has(neighbor)) {
+						parent.set(neighbor, current);
+					}
+				}
+			}
+		}
+
+		const path = [];
+		let curr = endNodeId;
+		while (curr !== undefined) {
+			path.unshift(curr);
+			curr = parent.get(curr);
+		}
+		return path;
+	}
 
 	// fillNode(node, nodeColor = '#00BA6C', textColor = '#FFFFFF') {
 	// 	ctx.beginPath();

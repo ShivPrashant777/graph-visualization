@@ -138,3 +138,12 @@ canvas {
 #log .traversal {
 	color: #87cefa; /* light blue */
 }
+
+.controls {
+	position: absolute;
+	top: 20px;
+	right: 25%;
+	display: flex;
+	gap: 8px;
+	z-index: 10;
+}
