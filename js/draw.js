@@ -191,11 +191,11 @@ canvas.addEventListener('click', (e) => {
 
 	if (mode === 'vertex') {
 		if (isTooClose(x, y)) {
-			console.warn('Too close to another node. Try a different spot.');
+			log('Too close to another node. Try a different spot.', 'warn');
 			return;
 		}
 		const node = graph.addNode(x, y);
-		log(`Node ${node.id} added at (${x}, ${y})`, 'add');
+		log(`Node ${node.id} added at (${x}, ${y})`, 'success');
 		drawGraph();
 	} else if (mode === 'edge') {
 		const clickedPos = getNodeAtPosition(x, y);
@@ -212,7 +212,7 @@ canvas.addEventListener('click', (e) => {
 					graph.addEdge(selectedNode.id, clickedPos.id);
 					log(
 						`Edge added between ${selectedNode.id} and ${clickedPos.id}`,
-						'add'
+						'success'
 					);
 				}
 				selectedNode = null;
@@ -238,7 +238,7 @@ canvas.addEventListener('contextmenu', (e) => {
 		}
 
 		graph.removeNode(clickedPos.id);
-		log(`Node ${clickedPos.id} removed`, 'delete');
+		log(`Node ${clickedPos.id} removed`, 'alert');
 		drawGraph();
 	}
 });
@@ -250,9 +250,8 @@ async function startDFS() {
 	}
 	disableButtons(true);
 	visitedNodes.clear();
-	log(`DFS Traversal started from ${selectedNode.id}`);
+	log(`DFS Traversal started from ${selectedNode.id} ...`);
 	await graph.dfs(selectedNode.id, (id) => {
-		console.log(id);
 		visitedNodes.add(id);
 		log(`Visited node ${id}`, 'traversal');
 		drawGraph();
@@ -269,7 +268,7 @@ async function startBFS() {
 	disableButtons(true);
 	visitedNodes.clear();
 	drawGraph();
-	log(`BFS Traversal started from ${selectedNode.id}`);
+	log(`BFS Traversal started from ${selectedNode.id} ...`);
 	await graph.bfs(selectedNode.id, (id) => {
 		visitedNodes.add(id);
 		log(`Visited node ${id}`, 'traversal');
@@ -279,5 +278,45 @@ async function startBFS() {
 	disableButtons(false);
 }
 
+async function runBestFirstSearch() {
+	const start = document.getElementById('startNode').value.trim().toUpperCase();
+	const end = document.getElementById('endNode').value.trim().toUpperCase();
+
+	if (!start || !end || start === end) {
+		log('Please enter valid and different start/end nodes', 'alert');
+		return;
+	}
+
+	log(`Best First Search from ${start} to ${end} ...`);
+
+	const allIds = graph.getNodes().map((n) => n.id);
+	if (!allIds.includes(start) || !allIds.includes(end)) {
+		log('Start or End node not found in graph', 'alert');
+		return;
+	}
+
+	isTraversing = true;
+	disableButtons(true);
+	visitedNodes.clear();
+	drawGraph();
+
+	const path = await graph.bestFirstSearch(start, end, (id) => {
+		visitedNodes.add(id);
+		log(`Visited ${id}`, 'traversal');
+		drawGraph();
+	});
+
+	isTraversing = false;
+	disableButtons(false);
+
+	if (path.length && path[0] == start && path[path.length - 1] == end) {
+		log(`Path: ${path.join(' → ')}`, 'traversal');
+	} else {
+		log('No path found', 'alert');
+	}
+	log(`Best First Search Ended`);
+}
+
 window.startDFS = startDFS;
 window.startBFS = startBFS;
+window.runBestFirstSearch = runBestFirstSearch;

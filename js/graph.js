@@ -1,4 +1,4 @@
-import PriorityQueue from './priorityQueue.js';
+import { PriorityQueue } from './utils.js';
 
 export default class Graph {
 	constructor() {
@@ -58,6 +58,10 @@ export default class Graph {
 				neighbors.filter((n) => n !== nodeId)
 			);
 		}
+	}
+
+	getNodeById(id) {
+		return this.nodes.find((node) => node.id === id);
 	}
 
 	getEdges(nodeId) {
@@ -125,9 +129,7 @@ export default class Graph {
 				if (!visited.has(neighbor)) {
 					const currentNode = this.getNodeById(current);
 					const neighborNode = this.getNodeById(neighbor);
-					const dx = currentNode.x - neighborNode.x;
-					const dy = currentNode.y - neighborNode.y;
-					const heuristic = Math.sqrt(dx * dx + dy * dy);
+					const heuristic = this.euclidianDistance(currentNode, neighborNode);
 
 					pq.enqueue(neighbor, heuristic);
 					if (!parent.has(neighbor)) {
@@ -262,13 +264,11 @@ export default class Graph {
 	// 	}, 1000);
 	// }
 
-	// euclidianDistance(startNode, endNode) {
-	// 	var dist = Math.sqrt(
-	// 		(startNode.x - endNode.x) ** 2 + (startNode.y - endNode.y) ** 2
-	// 	);
-
-	// 	return dist;
-	// }
+	euclidianDistance(currentNode, neighborNode) {
+		const dx = currentNode.x - neighborNode.x;
+		const dy = currentNode.y - neighborNode.y;
+		return Math.hypot(dx, dy);
+	}
 
 	// removeFromArray(arr, element) {
 	// 	for (var i = arr.length - 1; i >= 0; i--) {
