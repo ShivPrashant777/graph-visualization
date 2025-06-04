@@ -44,6 +44,16 @@ button:hover {
 	background-color: #141414;
 }
 
+#toggle-weights {
+	width: 170px;
+}
+
+.path-finding-input {
+	padding-left: 10px;
+	display: inline-block;
+	border-left: #333 1px solid;
+}
+
 #traversalSelect {
 	padding: 6px;
 	font-size: 14px;

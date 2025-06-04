@@ -14,7 +14,19 @@ var hoveredNode = null;
 var visitedNodes = new Set(); // track visited for animation
 var vertexModeBtn = document.getElementById('vertexModeBtn');
 var edgeModeBtn = document.getElementById('edgeModeBtn');
-var isTraversing = false;
+const toggleWeightsBtn = document.getElementById('toggle-weights');
+let isTraversing = false;
+let showEdgeWeights = true;
+
+toggleWeightsBtn.addEventListener('click', () => {
+	showEdgeWeights = !showEdgeWeights;
+	// Update button text and icon
+	toggleWeightsBtn.innerHTML = `
+		<i class="fa-solid ${showEdgeWeights ? 'fa-eye-slash' : 'fa-eye'}"></i>
+		${showEdgeWeights ? 'Hide Edge Weights' : 'Show Edge Weights'}
+	`;
+	drawGraph(); // re-render canvas
+});
 
 // Mode Buttons
 vertexModeBtn.addEventListener('click', () => {
@@ -86,15 +98,24 @@ function drawGraph() {
 
 	// Draw edges
 	for (const node of nodes) {
-		for (const neighborId of graph.getEdges(node.id)) {
+		for (const { node: neighborId, weight } of graph.getEdges(node.id)) {
 			const neighbor = nodes.find((n) => n.id === neighborId);
-			if (neighbor && node.id < neighbor.id) {
-				ctx.beginPath();
-				ctx.moveTo(node.x, node.y);
-				ctx.lineTo(neighbor.x, neighbor.y);
-				ctx.strokeStyle = '#555';
-				ctx.lineWidth = 2;
-				ctx.stroke();
+			if (!neighbor || node.id > neighborId) continue; // avoid duplicates
+
+			ctx.beginPath();
+			ctx.moveTo(node.x, node.y);
+			ctx.lineTo(neighbor.x, neighbor.y);
+			ctx.strokeStyle = '#333';
+			ctx.lineWidth = 2;
+			ctx.stroke();
+
+			// draw weight label at midpoint
+			if (showEdgeWeights) {
+				const midX = (node.x + neighbor.x) / 2;
+				const midY = (node.y + neighbor.y) / 2;
+				ctx.fillStyle = '#000';
+				ctx.font = '14px Arial';
+				ctx.fillText(weight, midX + 5, midY + 5);
 			}
 		}
 	}
@@ -209,11 +230,21 @@ canvas.addEventListener('click', (e) => {
 			} else {
 				// Add edge if not already added and reset selection
 				if (!graph.hasEdge(selectedNode.id, clickedPos.id)) {
-					graph.addEdge(selectedNode.id, clickedPos.id);
-					log(
-						`Edge added between ${selectedNode.id} and ${clickedPos.id}`,
-						'success'
+					const weightInput = prompt(
+						`Enter weight for edge ${selectedNode.id} — ${clickedPos.id}`,
+						'1'
 					);
+					const weight = parseInt(weightInput, 10);
+
+					if (!isNaN(weight)) {
+						graph.addEdge(selectedNode.id, clickedPos.id, weight);
+						log(
+							`Edge added between ${selectedNode.id} and ${clickedPos.id} with weight ${weight}`,
+							'success'
+						);
+					} else {
+						log(`Edge creation cancelled or invalid weight`, 'alert');
+					}
 				}
 				selectedNode = null;
 			}

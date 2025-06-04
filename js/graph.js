@@ -3,6 +3,12 @@ import { PriorityQueue } from './utils.js';
 export default class Graph {
 	constructor() {
 		this.nodes = [];
+		/*
+		Map {
+			'A' => [{ node: 'B', weight: 10 }],
+			'B' => [{ node: 'A', weight: 10 }],
+		}
+		*/
 		this.adjList = new Map();
 		this.nodeCount = 0;
 	}
@@ -25,22 +31,20 @@ export default class Graph {
 		return node;
 	}
 
-	addEdge(node1Id, node2Id) {
+	addEdge(node1Id, node2Id, weight = 1) {
 		if (this.adjList.has(node1Id) && this.adjList.has(node2Id)) {
-			if (!this.adjList.get(node1Id).includes(node2Id)) {
-				this.adjList.get(node1Id).push(node2Id);
+			if (!this.adjList.get(node1Id).some((n) => n.node === node2Id)) {
+				this.adjList.get(node1Id).push({ node: node2Id, weight });
 			}
-			if (!this.adjList.get(node2Id).includes(node1Id)) {
-				this.adjList.get(node2Id).push(node1Id);
+			if (!this.adjList.get(node2Id).some((n) => n.node === node1Id)) {
+				this.adjList.get(node2Id).push({ node: node1Id, weight });
 			}
 		}
 	}
 
 	// check if an edge exists between two nodes
 	hasEdge(node1Id, node2Id) {
-		return (
-			this.adjList.get(node1Id) && this.adjList.get(node1Id).includes(node2Id)
-		);
+		return this.adjList.get(node1Id)?.some((e) => e.node === node2Id);
 	}
 
 	getNodes() {
@@ -51,11 +55,14 @@ export default class Graph {
 		this.nodes = this.nodes.filter((node) => node.id !== nodeId);
 		this.adjList.delete(nodeId);
 
-		// Remove this node from others' adjacency lists
+		// Remove references to this node from other adjacency lists
 		for (const [key, neighbors] of this.adjList.entries()) {
 			this.adjList.set(
 				key,
-				neighbors.filter((n) => n !== nodeId)
+				neighbors.filter((n) => {
+					// handle both string and object formats
+					return n.node !== nodeId;
+				})
 			);
 		}
 	}
@@ -81,7 +88,7 @@ export default class Graph {
 			visitCallback(id);
 			await new Promise((res) => setTimeout(res, delay)); // animation delay
 
-			for (const neighbor of this.adjList.get(id) || []) {
+			for (const { node: neighbor } of this.adjList.get(id) || []) {
 				await dfsHelper(neighbor);
 			}
 		};
@@ -99,7 +106,7 @@ export default class Graph {
 			visitCallback(current);
 			await new Promise((res) => setTimeout(res, delay)); // animation delay
 
-			for (const neighbor of this.adjList.get(current) || []) {
+			for (const { node: neighbor } of this.adjList.get(current) || []) {
 				if (!visited.has(neighbor)) {
 					visited.add(neighbor);
 					queue.push(neighbor);
@@ -125,7 +132,7 @@ export default class Graph {
 			await new Promise((res) => setTimeout(res, delay));
 			if (current === endNodeId) break;
 
-			for (const neighbor of this.adjList.get(current) || []) {
+			for (const { node: neighbor } of this.adjList.get(current) || []) {
 				if (!visited.has(neighbor)) {
 					const currentNode = this.getNodeById(current);
 					const neighborNode = this.getNodeById(neighbor);

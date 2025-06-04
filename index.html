@@ -30,11 +30,16 @@
 			<button id="edgeModeBtn" data-selected="false">
 				<i class="fa-solid fa-circle-nodes"></i> Edge Mode
 			</button>
+			<button id="toggle-weights">
+				<i class="fa-solid fa-eye-slash"></i> Hide Edge Weights
+			</button>
 			<button id="startDFSBtn" onclick="startDFS()">Start DFS</button>
 			<button id="startBFSBtn" onclick="startBFS()">Start BFS</button>
-			<input type="text" id="startNode" placeholder="Start Node" />
-			<input type="text" id="endNode" placeholder="End Node" />
-			<button onclick="runBestFirstSearch()">Best First Search</button>
+			<div class="path-finding-input">
+				<input type="text" id="startNode" placeholder="Start Node" />
+				<input type="text" id="endNode" placeholder="End Node" />
+				<button onclick="runBestFirstSearch()">Best First Search</button>
+			</div>
 		</div>
 		<div class="container">
 			<canvas id="myCanvas" width="800" height="600"></canvas>
