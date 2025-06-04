@@ -1,4 +1,4 @@
-import { PriorityQueue } from './utils.js';
+import { PriorityQueue, Node } from './utils.js';
 
 export default class Graph {
 	constructor() {
@@ -25,7 +25,7 @@ export default class Graph {
 
 	addNode(x, y) {
 		const id = this.getNodeLabel(this.nodeCount++);
-		const node = { x, y, id };
+		const node = new Node(x, y, id);
 		this.nodes.push(node);
 		this.adjList.set(id, []);
 		return node;
@@ -51,24 +51,20 @@ export default class Graph {
 		return this.nodes;
 	}
 
+	getNodeById(id) {
+		return this.nodes.find((node) => node.id === id);
+	}
+
 	removeNode(nodeId) {
 		this.nodes = this.nodes.filter((node) => node.id !== nodeId);
 		this.adjList.delete(nodeId);
 
-		// Remove references to this node from other adjacency lists
 		for (const [key, neighbors] of this.adjList.entries()) {
 			this.adjList.set(
 				key,
-				neighbors.filter((n) => {
-					// handle both string and object formats
-					return n.node !== nodeId;
-				})
+				neighbors.filter((n) => n.node !== nodeId)
 			);
 		}
-	}
-
-	getNodeById(id) {
-		return this.nodes.find((node) => node.id === id);
 	}
 
 	getEdges(nodeId) {
@@ -136,8 +132,9 @@ export default class Graph {
 				if (!visited.has(neighbor)) {
 					const currentNode = this.getNodeById(current);
 					const neighborNode = this.getNodeById(neighbor);
-					const heuristic = this.euclidianDistance(currentNode, neighborNode);
+					if (!currentNode || !neighborNode) continue;
 
+					const heuristic = this.euclidianDistance(currentNode, neighborNode);
 					pq.enqueue(neighbor, heuristic);
 					if (!parent.has(neighbor)) {
 						parent.set(neighbor, current);
@@ -155,138 +152,17 @@ export default class Graph {
 		return path;
 	}
 
-	// fillNode(node, nodeColor = '#00BA6C', textColor = '#FFFFFF') {
-	// 	ctx.beginPath();
-	// 	ctx.arc(node.x, node.y, 35, 0, 2 * Math.PI);
-	// 	ctx.fillStyle = nodeColor;
-	// 	ctx.fill();
-	// 	ctx.fillStyle = textColor;
-	// 	ctx.font = '30px Arial';
-	// 	ctx.fillText(node.nodeName, node.x - 10, node.y + 10);
-	// 	ctx.arc(node.x, node.y, 35, 0, 2 * Math.PI);
-	// 	ctx.lineWidth = 0.2;
-	// 	ctx.stroke();
-	// }
-
-	// aStar(start, end) {
-	// 	/*
-	// 		Open = black
-	// 		Closed = purple
-	// 		Path = green
-	// 	*/
-	// 	var openSet = [];
-	// 	var closedSet = [];
-	// 	var path = [];
-	// 	var done = false;
-	// 	openSet.push(start);
-
-	// 	const interval = setInterval(() => {
-	// 		if (openSet.length > 0) {
-	// 			var winner = 0;
-	// 			for (var i = 0; i < openSet.length; i++) {
-	// 				if (openSet[i].f < openSet[winner].f) {
-	// 					winner = i;
-	// 				}
-	// 			}
-	// 			var current = openSet[winner];
-	// 			if (current === end) {
-	// 				done = true;
-	// 			}
-	// 			this.removeFromArray(openSet, current);
-	// 			closedSet.push(current);
-
-	// 			var neighbors = this.AdjList.get(current);
-	// 			for (var i = 0; i < neighbors.length; i++) {
-	// 				var neighbor = neighbors[i];
-	// 				if (!closedSet.includes(neighbor)) {
-	// 					var newPath = false;
-	// 					var tempG =
-	// 						current.g +
-	// 						this.manhattanDistance(
-	// 							current.x,
-	// 							current.y,
-	// 							neighbor.x,
-	// 							neighbor.y
-	// 						);
-	// 					if (openSet.includes(neighbor)) {
-	// 						if (tempG < neighbor.g) {
-	// 							newPath = true;
-	// 							neighbor.g = tempG;
-	// 						}
-	// 					} else {
-	// 						newPath = true;
-	// 						neighbor.g = tempG;
-	// 						openSet.push(neighbor);
-	// 					}
-	// 					if (newPath) {
-	// 						neighbor.h = this.euclidianDistance(neighbor, end);
-	// 						neighbor.f = neighbor.h + neighbor.g;
-	// 						neighbor.previous = current;
-	// 					}
-	// 				}
-	// 			}
-	// 		} else {
-	// 			done = true;
-	// 			// display path in side panel
-	// 			const p = document.createElement('p');
-	// 			var operations = document.getElementById('operations');
-	// 			p.innerHTML = `A* Path: No Solution`;
-	// 			operations.appendChild(p);
-	// 			clearInterval(interval);
-	// 			return;
-	// 		}
-	// 		path = [];
-	// 		var temp = current;
-	// 		path.push(temp);
-	// 		while (temp.previous) {
-	// 			path.push(temp.previous);
-	// 			temp = temp.previous;
-	// 		}
-
-	// 		for (var node of openSet) {
-	// 			this.fillNode(node, '#000', '#FFF');
-	// 		}
-
-	// 		for (var node of closedSet) {
-	// 			this.fillNode(node, 'purple', '#FFF');
-	// 		}
-
-	// 		for (var node of path) {
-	// 			this.fillNode(node, 'green', '#FFF');
-	// 		}
-
-	// 		if (done) {
-	// 			clearInterval(interval);
-	// 			var result = '';
-
-	// 			for (var i of path) {
-	// 				result = i.nodeName + ' ' + result;
-	// 			}
-	// 			// display path in side panel
-	// 			const p = document.createElement('p');
-	// 			var operations = document.getElementById('operations');
-	// 			p.innerHTML = `A* Path: ${result}`;
-	// 			operations.appendChild(p);
-	// 		}
-	// 	}, 1000);
-	// }
-
 	euclidianDistance(currentNode, neighborNode) {
-		const dx = currentNode.x - neighborNode.x;
-		const dy = currentNode.y - neighborNode.y;
-		return Math.hypot(dx, dy);
+		return Math.hypot(
+			currentNode.x - neighborNode.x,
+			currentNode.y - neighborNode.y
+		);
 	}
 
-	// removeFromArray(arr, element) {
-	// 	for (var i = arr.length - 1; i >= 0; i--) {
-	// 		if (arr[i] == element) {
-	// 			arr.splice(i, 1);
-	// 		}
-	// 	}
-	// }
-
-	// manhattanDistance(x1, y1, x2, y2) {
-	// 	var dist = Math.abs(x1 - x2) + Math.abs(y1 - y2);
-	// 	return dist;
-	// }
+	manhattanDistance(currentNode, neighborNode) {
+		return (
+			Math.abs(currentNode.x - neighborNode.x) +
+			Math.abs(currentNode.y - neighborNode.y)
+		);
+	}
 }

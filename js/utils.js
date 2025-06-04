@@ -40,6 +40,14 @@ function disableButtons(state) {
 	}
 }
 
+class Node {
+	constructor(x, y, id) {
+		this.x = x;
+		this.y = y;
+		this.id = id;
+	}
+}
+
 class PriorityQueue {
 	constructor() {
 		this.items = [];
@@ -67,5 +75,6 @@ export {
 	log,
 	clearLogs,
 	disableButtons,
+	Node,
 	PriorityQueue,
 };
