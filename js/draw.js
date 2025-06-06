@@ -53,6 +53,7 @@ edgeModeBtn.addEventListener('click', () => {
 // disable default right click behaviour
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
+// Drag and Drop nodes to new position
 canvas.addEventListener('mousedown', (e) => {
 	if (isTraversing) return;
 
@@ -421,6 +422,14 @@ async function runAStarSearch() {
 	}
 	log(`A* Search Ended`);
 }
+
+// Download image as PNG
+document.getElementById('download-image').addEventListener('click', () => {
+	const link = document.createElement('a');
+	link.download = 'graph.png'; // File name
+	link.href = canvas.toDataURL('image/png'); // Get PNG from canvas
+	link.click(); // Trigger download
+});
 
 window.startDFS = startDFS;
 window.startBFS = startBFS;
