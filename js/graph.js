@@ -152,6 +152,65 @@ export default class Graph {
 		return path;
 	}
 
+	async aStarSearch(startNodeId, endNodeId, visitCallback, delay = 1000) {
+		const openSet = new PriorityQueue(); // nodeId with priority = f(n)
+		const cameFrom = new Map(); // for path reconstruction
+		const gScore = new Map(); // cost from start to node
+		const fScore = new Map(); // estimated total cost
+
+		const startNode = this.getNodeById(startNodeId);
+		const endNode = this.getNodeById(endNodeId);
+
+		if (!startNode || !endNode) return [];
+
+		for (const node of this.nodes) {
+			gScore.set(node.id, Infinity);
+			fScore.set(node.id, Infinity);
+		}
+		gScore.set(startNodeId, 0);
+		fScore.set(startNodeId, this.euclidianDistance(startNode, endNode));
+		openSet.enqueue(startNodeId, fScore.get(startNodeId));
+
+		const visited = new Set();
+
+		while (!openSet.isEmpty()) {
+			const current = openSet.dequeue();
+			if (visited.has(current)) continue;
+
+			visited.add(current);
+			visitCallback(current);
+			await new Promise((res) => setTimeout(res, delay));
+
+			if (current === endNodeId) break;
+
+			for (const { node: neighbor, weight } of this.getEdges(current)) {
+				if (visited.has(neighbor)) continue;
+
+				const tentativeG = gScore.get(current) + weight;
+				if (tentativeG < gScore.get(neighbor)) {
+					cameFrom.set(neighbor, current);
+					gScore.set(neighbor, tentativeG);
+
+					const neighborNode = this.getNodeById(neighbor);
+					const heuristic = this.euclidianDistance(neighborNode, endNode);
+					const totalCost = tentativeG + heuristic;
+
+					fScore.set(neighbor, totalCost);
+					openSet.enqueue(neighbor, totalCost);
+				}
+			}
+		}
+
+		// Reconstruct path
+		const path = [];
+		let curr = endNodeId;
+		while (curr !== undefined) {
+			path.unshift(curr);
+			curr = cameFrom.get(curr);
+		}
+		return path;
+	}
+
 	euclidianDistance(currentNode, neighborNode) {
 		return Math.hypot(
 			currentNode.x - neighborNode.x,

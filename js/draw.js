@@ -348,6 +348,46 @@ async function runBestFirstSearch() {
 	log(`Best First Search Ended`);
 }
 
+async function runAStarSearch() {
+	const start = document.getElementById('startNode').value.trim().toUpperCase();
+	const end = document.getElementById('endNode').value.trim().toUpperCase();
+
+	if (!start || !end || start === end) {
+		log('Please enter valid and different start/end nodes', 'alert');
+		return;
+	}
+
+	log(`A* Search from ${start} to ${end} ...`);
+
+	const allIds = graph.getNodes().map((n) => n.id);
+	if (!allIds.includes(start) || !allIds.includes(end)) {
+		log('Start or End node not found in graph', 'alert');
+		return;
+	}
+
+	isTraversing = true;
+	disableButtons(true);
+	visitedNodes.clear();
+	drawGraph();
+
+	const path = await graph.aStarSearch(start, end, (id) => {
+		visitedNodes.add(id);
+		log(`Visited ${id}`, 'traversal');
+		drawGraph();
+	});
+
+	isTraversing = false;
+	disableButtons(false);
+
+	if (path.length && path[0] == start && path[path.length - 1] == end) {
+		log(`Path: ${path.join(' → ')}`, 'traversal');
+	} else {
+		log('No path found', 'alert');
+	}
+	log(`A* Search Ended`);
+}
+
 window.startDFS = startDFS;
 window.startBFS = startBFS;
 window.runBestFirstSearch = runBestFirstSearch;
+window.runAStarSearch = runAStarSearch;
