@@ -17,7 +17,12 @@ var edgeModeBtn = document.getElementById('edgeModeBtn');
 const toggleWeightsBtn = document.getElementById('toggle-weights');
 let isTraversing = false;
 let showEdgeWeights = true;
+let isDragging = false;
+let draggedNode = null;
+let offsetX = 0;
+let offsetY = 0;
 
+// Toggle Edge Weights
 toggleWeightsBtn.addEventListener('click', () => {
 	showEdgeWeights = !showEdgeWeights;
 	// Update button text and icon
@@ -48,10 +53,41 @@ edgeModeBtn.addEventListener('click', () => {
 // disable default right click behaviour
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
+canvas.addEventListener('mousedown', (e) => {
+	if (isTraversing) return;
+
+	const rect = canvas.getBoundingClientRect();
+	const x = e.clientX - rect.left;
+	const y = e.clientY - rect.top;
+
+	const node = getNodeAtPosition(x, y);
+	if (node) {
+		isDragging = true;
+		draggedNode = node;
+		offsetX = node.x - x;
+		offsetY = node.y - y;
+	}
+});
+
+canvas.addEventListener('mouseup', () => {
+	if (isDragging) {
+		isDragging = false;
+		draggedNode = null;
+	}
+});
+
 canvas.addEventListener('mousemove', (e) => {
 	const rect = canvas.getBoundingClientRect();
 	mouseX = e.clientX - rect.left;
 	mouseY = e.clientY - rect.top;
+
+	// If dragging, update node position
+	if (isDragging && draggedNode) {
+		draggedNode.x = mouseX + offsetX;
+		draggedNode.y = mouseY + offsetY;
+		drawGraph();
+		return; // Skip hover/tooltip logic while dragging
+	}
 
 	// display tooltip when mouse pointer is too close to another node
 	if (mode === 'vertex') {
@@ -212,7 +248,6 @@ canvas.addEventListener('click', (e) => {
 
 	if (mode === 'vertex') {
 		if (isTooClose(x, y)) {
-			log('Too close to another node. Try a different spot.', 'warn');
 			return;
 		}
 		const node = graph.addNode(x, y);
